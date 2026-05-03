@@ -11,6 +11,7 @@
 
 body { margin:0; display:flex; font-family:Segoe UI; }
 
+/* HEADER */
 #header {
   position:fixed; top:0; width:100%; height:60px;
   background:#121222; color:white;
@@ -18,6 +19,7 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   padding:0 20px;
 }
 
+/* SIDEBAR */
 #sidebar {
   width:320px; margin-top:60px;
   height:calc(100vh - 60px);
@@ -25,11 +27,13 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   overflow:auto;
 }
 
+/* MAP */
 #map {
   flex:1; margin-top:60px;
   height:calc(100vh - 60px);
 }
 
+/* TABS */
 .tab { padding:8px; margin:3px; cursor:pointer; background:#2a2a40; }
 .tab.active { background:#00ffff; color:black; }
 
@@ -47,18 +51,11 @@ body { margin:0; display:flex; font-family:Segoe UI; }
 
 .eye { text-align:center; cursor:pointer; }
 
-.item span {
-  white-space: normal;
-  word-break: break-word;
-}
-
 input[type="color"] {
-  width:32px;
-  height:32px;
+  width:32px; height:32px;
   border:2px solid #555;
   border-radius:6px;
   cursor:pointer;
-  justify-self:center;
 }
 
 input[type="range"] {
@@ -66,10 +63,7 @@ input[type="range"] {
   accent-color:#bb00ff;
 }
 
-.legend {
-  margin-top:10px;
-  font-size:12px;
-}
+.legend { margin-top:10px; font-size:12px; }
 
 </style>
 </head>
@@ -94,9 +88,7 @@ input[type="range"] {
 
 <div id="analysisTab" style="display:none;">
 <select id="analysisType">
-  <option value="density">Yoğunluk</option>
-  <option value="population">Nüfus</option>
-  <option value="area">Alan</option>
+  <option value="area">Alan (hektar)</option>
 </select>
 <div id="legend" class="legend"></div>
 </div>
@@ -108,18 +100,23 @@ input[type="range"] {
 <script>
 
 let currentMode = "layers";
+let animationInterval = null;
 
 function switchTab(tab){
 
   document.getElementById("layersTab").style.display="none";
   document.getElementById("analysisTab").style.display="none";
-
   document.getElementById(tab+"Tab").style.display="block";
 
   currentMode = tab;
 
   if(tab === "layers"){
+    stopAnimation();
     resetLayerStyle();
+  }
+
+  if(tab === "analysis"){
+    startGlowAnimation();
   }
 }
 
@@ -132,66 +129,8 @@ let layerMap = {};
 let stateColors = {};
 let opacityMap = {};
 
-let populationData = {
-  "Bayern":13124737,
-  "Berlin":3669491,
-  "Hessen":6293154,
-  "Hamburg":1841179
-};
-
-function getColor(v, breaks){
-  return v > breaks[4] ? '#4a0033' :
-         v > breaks[3] ? '#80004d' :
-         v > breaks[2] ? '#b3006b' :
-         v > breaks[1] ? '#e60099' :
-         v > breaks[0] ? '#ff4dc4' :
-                         '#ffb3ec';
-}
-
-function getValue(f,type){
-  let area = f.properties.area_ha || 1;
-  let pop = populationData[f.properties.name] || 1;
-
-  if(type==="density") return pop/area;
-  if(type==="population") return pop;
-  if(type==="area") return area;
-}
-
-function getBreaks(vals){
-  vals.sort((a,b)=>a-b);
-  return [
-    vals[Math.floor(vals.length*0.2)],
-    vals[Math.floor(vals.length*0.4)],
-    vals[Math.floor(vals.length*0.6)],
-    vals[Math.floor(vals.length*0.8)],
-    vals[Math.floor(vals.length*0.95)]
-  ];
-}
-
-function applyAnalysis(type){
-
-  let vals=[];
-
-  geoLayer.eachLayer(l=>{
-    vals.push(getValue(l.feature,type));
-  });
-
-  let breaks = getBreaks(vals);
-
-  geoLayer.setStyle(f=>{
-    return {
-      fillColor:getColor(getValue(f,type),breaks),
-      color:"#222",
-      weight:1,
-      fillOpacity:0.8
-    };
-  });
-
-  updateLegend(breaks);
-}
-
+// RESET STYLE
 function resetLayerStyle(){
-
   geoLayer.eachLayer(l=>{
     let name = l.feature.properties.name;
 
@@ -202,25 +141,56 @@ function resetLayerStyle(){
       weight:1
     });
   });
+}
+
+// 🌟 GLOW ANİMASYON
+function startGlowAnimation(){
+
+  if(animationInterval) clearInterval(animationInterval);
+
+  let layers = [];
+
+  geoLayer.eachLayer(l=>{
+    layers.push(l);
+  });
+
+  layers.sort((a,b)=>{
+    return (a.feature.properties.area_ha || 0) - (b.feature.properties.area_ha || 0);
+  });
+
+  let i = 0;
+
+  animationInterval = setInterval(()=>{
+
+    resetLayerStyle();
+
+    let layer = layers[i];
+
+    // ✨ GLOW EFEKT
+    layer.setStyle({
+      color: "#ffffff",
+      weight: 5,
+      fillColor: "#ff00cc",
+      fillOpacity: 1,
+      opacity: 1
+    });
+
+    // 🔥 hafif zoom efekti
+    map.fitBounds(layer.getBounds(), {padding:[80,80]});
+
+    i++;
+    if(i >= layers.length) i = 0;
+
+  }, 1400); // yavaş animasyon
 
 }
 
-function updateLegend(breaks){
-
-  let div = document.getElementById("legend");
-  div.innerHTML = "<h4>🎨 Analiz</h4>";
-
-  breaks.forEach(b=>{
-    div.innerHTML += `
-      <div style="display:flex;align-items:center;margin:4px 0;">
-        <span style="
-          background:${getColor(b,breaks)};
-          width:18px;height:18px;border-radius:4px;
-          margin-right:8px;"></span>
-        ${b.toFixed(2)}
-      </div>
-    `;
-  });
+// STOP
+function stopAnimation(){
+  if(animationInterval){
+    clearInterval(animationInterval);
+    animationInterval = null;
+  }
 }
 
 // DATA
@@ -252,7 +222,6 @@ fetch("https://germany-webgis-1.onrender.com/states")
 
     let eye=document.createElement("span");
     eye.innerText="👁️";
-    eye.className="eye";
 
     let visible=true;
 
@@ -273,12 +242,10 @@ fetch("https://germany-webgis-1.onrender.com/states")
     let label=document.createElement("span");
     label.innerText=name;
 
-    // 🔥 ZOOM + POPUP
-    label.onclick = ()=>{
+    label.onclick=()=>{
       let layer = layerMap[name];
-      let bounds = layer.getBounds();
 
-      map.fitBounds(bounds,{padding:[50,50]});
+      map.fitBounds(layer.getBounds(),{padding:[50,50]});
 
       layer.bindPopup(`
         <b>${name}</b><br>
@@ -326,14 +293,6 @@ fetch("https://germany-webgis-1.onrender.com/states")
   map.fitBounds(geoLayer.getBounds());
 
 });
-
-// ANALYSIS ONLY WHEN TAB ACTIVE
-document.getElementById("analysisType").addEventListener("change", e=>{
-  if(currentMode === "analysis"){
-    applyAnalysis(e.target.value);
-  }
-});
-
 </script>
 
 </body>
