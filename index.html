@@ -267,6 +267,24 @@ console.log(data);
       let label = document.createElement("span");
       label.innerText = name;
 
+label.style.cursor = "pointer";
+
+label.onclick = () => {
+
+  geoLayer.eachLayer(layer => {
+    if(layer.feature.properties.name === name) {
+
+      map.fitBounds(layer.getBounds(), {
+        animate: true,
+        duration: 1.5
+      });
+
+      layer.openPopup();
+    }
+  });
+
+};
+
       let input = document.createElement("input");
       input.type = "color";
       input.value = stateColors[name];
@@ -342,37 +360,44 @@ fetch("https://germany-webgis-1.onrender.com/states_list")
 
       // 🎯 Eyalet adı
       let label = document.createElement("span");
-      label.innerText = name;
+label.innerText = name;
+label.style.cursor = "pointer"; // 👈 EL İKONU
 
-      // 🎨 renk seçici
-      let input = document.createElement("input");
-      input.type = "color";
-      input.value = stateColors[name] || getColor(name);
+// 🎨 renk seçici
+let input = document.createElement("input");
+input.type = "color";
+input.value = stateColors[name] || getColor(name);
 
-      input.oninput = (e) => {
-        stateColors[name] = e.target.value;
-        geoLayer.setStyle(styleFeature);
-      };
+input.style.cursor = "pointer"; // 👈 EL İKONU
 
-      // 🧠 tıklama (zoom)
-      label.onclick = () => {
-        geoLayer.eachLayer(layer => {
-          if(layer.feature.properties.name === name) {
+input.onclick = (e) => {
+  e.stopPropagation();
+};
 
-            map.fitBounds(layer.getBounds(), {
-              animate: true,
-              duration: 1.5
-            });
+input.oninput = (e) => {
+  stateColors[name] = e.target.value;
+  geoLayer.setStyle(styleFeature);
+};
 
-            layer.openPopup();
-          }
-        });
-      };
+// 🧠 tıklama (zoom)
+label.onclick = () => {
+  geoLayer.eachLayer(layer => {
+    if(layer.feature.properties.name === name) {
 
-      div.appendChild(label);
-      div.appendChild(input);
+      map.fitBounds(layer.getBounds(), {
+        animate: true,
+        duration: 1.5
+      });
 
-      container.appendChild(div);
+      layer.openPopup();
+    }
+  });
+};
+
+div.appendChild(label);
+div.appendChild(input);
+
+container.appendChild(div);
     });
 
   });
