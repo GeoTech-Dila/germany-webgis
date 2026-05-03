@@ -75,17 +75,11 @@ canvas {
 
 <script>
 
-// ======================
-// MAP
-// ======================
 var map = L.map('map').setView([51,10],6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
 let geoLayer, layerMap={}, stateColors={}, opacityMap={};
 
-// ======================
-// DATA
-// ======================
 let populationData = {
   "Bayern":13124737,
   "Berlin":3669491,
@@ -93,9 +87,6 @@ let populationData = {
   "Hamburg":1841179
 };
 
-// ======================
-// HELPERS
-// ======================
 function randomColor(){
   return `hsl(${Math.random()*360},70%,60%)`;
 }
@@ -109,27 +100,36 @@ function getValue(f,type){
   if(type==="area") return area;
 }
 
-// ======================
-// LAYERS RESET
-// ======================
+// 🔥 RESET GÜNCELLENDİ
 function resetLayerStyle(){
+
   geoLayer.eachLayer(l=>{
     let n=l.feature.properties.name;
-    l.setStyle({
-      fillColor: stateColors[n],
-      fillOpacity: opacityMap[n],
-      color:"#222"
-    });
+
+    if(animationInterval){
+      // ANALYSIS MODE
+      l.setStyle({
+        fillColor:"#ff00cc",
+        fillOpacity:0.15,
+        color:"#444",
+        weight:1
+      });
+    } else {
+      // LAYERS MODE
+      l.setStyle({
+        fillColor: stateColors[n],
+        fillOpacity: opacityMap[n],
+        color:"#222",
+        weight:1
+      });
+    }
+
   });
 }
 
-// ======================
-// TAB SWITCH
-// ======================
 function switchTab(tab){
   document.getElementById("layersTab").style.display="none";
   document.getElementById("analysisTab").style.display="none";
-
   document.getElementById(tab+"Tab").style.display="block";
 
   if(tab==="layers"){
@@ -138,9 +138,6 @@ function switchTab(tab){
   }
 }
 
-// ======================
-// ANALYSIS SYSTEM
-// ======================
 let charts={}, chartData={}, animationInterval=null;
 
 const analysisTypes = [
@@ -149,7 +146,6 @@ const analysisTypes = [
   {key:"density", label:"Yoğunluk"}
 ];
 
-// 🎯 BUILD UI
 function buildAnalysisUI(data){
 
   let container = document.getElementById("analysisTab");
@@ -179,7 +175,6 @@ function buildAnalysisUI(data){
   createCharts(data);
 }
 
-// 📊 CREATE CHARTS
 function createCharts(data){
 
   analysisTypes.forEach(type=>{
@@ -218,7 +213,7 @@ function createCharts(data){
 
 }
 
-// 🌟 ANIMATION
+// 🔥 ANIMATION GÜNCELLENDİ
 function startAnimation(type){
 
   if(animationInterval) clearInterval(animationInterval);
@@ -232,18 +227,18 @@ function startAnimation(type){
 
   animationInterval=setInterval(()=>{
 
-    resetLayerStyle();
+    resetLayerStyle(); // 🔥 pembe base
 
     let layer = layers[i];
     let name = layer.feature.properties.name;
     let value = getValue(layer.feature,type);
 
-    // GLOW
+    // 🔥 GLOW
     layer.setStyle({
       fillColor:"#ff00cc",
       fillOpacity:1,
-      color:"#fff",
-      weight:4
+      color:"#ffffff",
+      weight:3
     });
 
     layer.bindPopup(`<b>${name}</b><br>${value.toLocaleString()}`).openPopup();
@@ -261,10 +256,8 @@ function startAnimation(type){
     if(i>=layers.length) i=0;
 
   },1500);
-
 }
 
-// STOP
 function stopAnimation(){
   if(animationInterval){
     clearInterval(animationInterval);
@@ -272,9 +265,6 @@ function stopAnimation(){
   }
 }
 
-// ======================
-// FETCH
-// ======================
 fetch("https://germany-webgis-1.onrender.com/states")
 .then(r=>r.json())
 .then(data=>{
@@ -288,7 +278,8 @@ fetch("https://germany-webgis-1.onrender.com/states")
       return {
         fillColor:stateColors[name],
         fillOpacity:0.5,
-        color:"#222"
+        color:"#222",
+        weight:1
       };
     },
     onEachFeature:(f,l)=>{
