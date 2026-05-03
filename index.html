@@ -23,16 +23,19 @@
        SIDEBAR
     ====================== */
     #sidebar {
-      width: 300px;
-      height: 100vh;
-      overflow: auto;
-      background: #f4f4f4;
-      padding: 10px;
-      border-right: 1px solid #ccc;
+  width: 320px;
+  height: 100vh;
+  overflow: auto;
+  background: #1e1e2f;
+  color: white;
+  padding: 15px;
+  border-right: none;
+}
 
-      font-family: "Segoe UI", Arial, sans-serif;
-      font-size: 14px;
-    }
+#sidebar h3, #sidebar h4 {
+  margin-top: 15px;
+  font-weight: 600;
+}
 
     /* ======================
        PANEL TEXT FIX
@@ -47,9 +50,16 @@
        MAP
     ====================== */
     #map {
-      flex: 1;
-      height: 100vh;
-    }
+  flex: 1;
+  height: 100vh;
+
+  /* 👇 fade efekti buraya */
+  animation: fadeIn 2s ease-in;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
     /* ======================
        LIST ITEM
@@ -76,6 +86,30 @@
       background: none;
       cursor: pointer;
     }
+    /* ======================
+   SLIDER STYLE
+====================== */
+input[type="range"] {
+  width: 100%;
+  accent-color: #00ffff;
+}
+    /* ======================
+   LEGEND STYLE
+====================== */
+.legend {
+  background: rgba(30,30,47,0.9);
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+  font-size: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.legend h4 {
+  margin: 0 0 8px 0;
+  color: #00ffff;
+}
 
   </style>
 </head>
@@ -83,8 +117,11 @@
 <body>
 
 <div id="sidebar">
-  <h3>🗺️ Eyalet Renkleri</h3>
 
+  <h2 style="color:#00ffff; margin-bottom:10px;">🌍 WebGIS Dashboard</h2>
+  <hr style="border: 1px solid #333;">
+
+  <h3>🗺️ Eyalet Renkleri</h3>
   <div id="colorPanel"></div>
 
   <h3>📍 Eyalet Listesi</h3>
@@ -92,6 +129,7 @@
 
   <h4>🎚️ Saydamlık</h4>
   <input id="opacitySlider" type="range" min="0.1" max="1" step="0.1" value="0.7">
+
 </div>
 
 <div id="map"></div>
@@ -104,7 +142,7 @@
 var map = L.map('map').setView([51, 10], 6);
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap & CartoDB'
+  attribution: '',
 }).addTo(map);
 
 // ======================
@@ -168,17 +206,21 @@ fetch("https://germany-webgis-1.onrender.com/states")
 
       onEachFeature: function(feature, layer) {
 
-        layer.bindPopup(feature.properties.name);
+        layer.bindPopup(`
+          <div style="font-size:14px;">
+            <b>${feature.properties.name}</b><br>
+            🌍 Alan: ${feature.properties.area_ha.toLocaleString()} ha
+          </div>
+        `);
 
         layer.on({
-
           mouseover: function(e) {
             let layer = e.target;
 
             layer.setStyle({
-              weight: 3,
-              color: "#ffffff",
-              fillOpacity: 0.9
+              weight: 4,
+              color: "#00ffff",
+              fillOpacity: 1
             });
 
             layer.bringToFront();
@@ -187,7 +229,6 @@ fetch("https://germany-webgis-1.onrender.com/states")
           mouseout: function(e) {
             geoLayer.resetStyle(e.target);
           }
-
         });
 
       }
@@ -210,6 +251,12 @@ fetch("https://germany-webgis-1.onrender.com/states")
       row.style.margin = "5px 0";
       row.style.alignItems = "center";
 
+      row.style.background = "#2a2a40";
+      row.style.padding = "6px";
+      row.style.borderRadius = "6px";
+      row.style.marginBottom = "6px";
+      row.style.color = "white";
+
       let label = document.createElement("span");
       label.innerText = name;
 
@@ -227,7 +274,45 @@ fetch("https://germany-webgis-1.onrender.com/states")
       panel.appendChild(row);
     });
 
-  });
+    // ======================
+    // LEGEND (DOĞRU YER)
+    // ======================
+    let legend = L.control({ position: "bottomright" });
+
+    legend.onAdd = function () {
+      let div = L.DomUtil.create("div", "legend");
+
+      div.innerHTML = "<h4>Legend</h4>";
+
+      data.features.forEach(f => {
+        let name = f.properties.name;
+        let color = stateColors[name];
+
+        div.innerHTML += `
+          <div style="display:flex; align-items:center; margin:4px 0;">
+            <span style="
+              width:15px;
+              height:15px;
+              background:${color};
+              display:inline-block;
+              margin-right:8px;
+            "></span>
+            ${name}
+          </div>
+        `;
+      });
+
+      return div;
+    };
+
+    legend.addTo(map);
+
+    // ======================
+    // HARİTA AÇILINCA TAM GÖSTER
+    // ======================
+    map.fitBounds(geoLayer.getBounds());
+
+});
 
 // ======================
 // DASHBOARD LIST
@@ -246,16 +331,21 @@ fetch("https://germany-webgis-1.onrender.com/states_list")
 
       div.onclick = () => {
 
-        geoLayer.eachLayer(layer => {
-          if(layer.feature.properties.name === name) {
-            map.fitBounds(layer.getBounds());
-            layer.openPopup();
-          }
-        });
+  geoLayer.eachLayer(layer => {
+    if(layer.feature.properties.name === name) {
 
-      };
+      map.fitBounds(layer.getBounds(), {
+        animate: true,
+        duration: 1.5
+      });
 
-      container.appendChild(div);
+      layer.openPopup();
+    }
+  });
+
+};
+
+container.appendChild(div);
     });
 
   });
