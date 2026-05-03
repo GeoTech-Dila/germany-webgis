@@ -144,6 +144,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').add
 
 let geoLayer;
 let stateColors = {};
+let layerMap = {}; // 🔥 layer saklama
 
 function getColor(name){
   const colors = ["#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33"];
@@ -168,6 +169,8 @@ fetch("https://germany-webgis-1.onrender.com/states")
     style:styleFeature,
     onEachFeature:(f,l)=>{
 
+      layerMap[f.properties.name] = l; // 🔥 kaydet
+
       l.bindPopup(`<b>${f.properties.name}</b><br>🌍 ${f.properties.area_ha?.toLocaleString() || "?"} ha`);
 
       l.on({
@@ -188,6 +191,30 @@ fetch("https://germany-webgis-1.onrender.com/states")
     let div = document.createElement("div");
     div.className="item";
 
+    // 👁️ GÖZ
+    let eye = document.createElement("span");
+    eye.innerText = "👁️";
+    eye.style.cursor = "pointer";
+    eye.style.marginRight = "8px";
+
+    let visible = true;
+
+    eye.onclick = (e)=>{
+      e.stopPropagation();
+
+      let layer = layerMap[name];
+
+      if(visible){
+        map.removeLayer(layer);
+        eye.innerText="🚫";
+      } else {
+        map.addLayer(layer);
+        eye.innerText="👁️";
+      }
+
+      visible=!visible;
+    };
+
     let label = document.createElement("span");
     label.innerText=name;
 
@@ -195,14 +222,14 @@ fetch("https://germany-webgis-1.onrender.com/states")
       document.querySelectorAll(".item").forEach(e=>e.classList.remove("active"));
       div.classList.add("active");
 
-      geoLayer.eachLayer(l=>{
-        if(l.feature.properties.name===name){
-          let b=l.getBounds();
-          map.fitBounds(b,{padding:[50,50]});
-          map.panTo(b.getCenter());
-          l.openPopup();
-        }
-      });
+      let layer = layerMap[name];
+
+      let b = layer.getBounds();
+
+      map.fitBounds(b,{padding:[50,50]});
+      map.panTo(b.getCenter());
+
+      layer.openPopup();
     };
 
     let input=document.createElement("input");
@@ -215,7 +242,15 @@ fetch("https://germany-webgis-1.onrender.com/states")
       geoLayer.setStyle(styleFeature);
     };
 
-    div.appendChild(label);
+    // 🔥 SOL BLOK
+    let left = document.createElement("div");
+    left.style.display="flex";
+    left.style.alignItems="center";
+
+    left.appendChild(eye);
+    left.appendChild(label);
+
+    div.appendChild(left);
     div.appendChild(input);
     container.appendChild(div);
 
