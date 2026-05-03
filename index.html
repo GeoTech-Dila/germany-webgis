@@ -201,24 +201,23 @@ fetch("https://germany-webgis-1.onrender.com/states")
   .then(r => r.json())
   .then(data => {
 
-console.log(data);
+    console.log(data);
 
     geoLayer = L.geoJSON(data, {
-
       style: styleFeature,
 
       onEachFeature: function(feature, layer) {
 
         layer.bindPopup(`
-  <div style="font-size:14px;">
-    <b>${feature.properties.name}</b><br>
-    🌍 Alan: ${
-      feature.properties.area_ha
-      ? feature.properties.area_ha.toLocaleString() + " ha"
-      : "bilgi yok"
-    }
-  </div>
-`);
+          <div style="font-size:14px;">
+            <b>${feature.properties.name}</b><br>
+            🌍 Alan: ${
+              feature.properties.area_ha
+              ? feature.properties.area_ha.toLocaleString() + " ha"
+              : "bilgi yok"
+            }
+          </div>
+        `);
 
         layer.on({
           mouseover: function(e) {
@@ -237,76 +236,72 @@ console.log(data);
             geoLayer.resetStyle(e.target);
           }
         });
-
       }
 
     }).addTo(map);
 
     // ======================
-    // COLOR PANEL
+    // TEK LİSTE + RENK + ZOOM
     // ======================
-    let panel = document.getElementById("colorPanel");
+    let container = document.getElementById("list");
 
     data.features.forEach(f => {
 
       let name = f.properties.name;
       stateColors[name] = getColor(name);
 
-      let row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.justifyContent = "space-between";
-      row.style.margin = "5px 0";
-      row.style.alignItems = "center";
+      let div = document.createElement("div");
+      div.className = "item";
+      div.style.display = "flex";
+      div.style.justifyContent = "space-between";
+      div.style.alignItems = "center";
 
-      row.style.background = "#2a2a40";
-      row.style.padding = "6px";
-      row.style.borderRadius = "6px";
-      row.style.marginBottom = "6px";
-      row.style.color = "white";
-
+      // LABEL
       let label = document.createElement("span");
       label.innerText = name;
+      label.style.cursor = "pointer";
 
-label.style.cursor = "pointer";
+      label.onclick = () => {
+        geoLayer.eachLayer(layer => {
+          if(layer.feature.properties.name === name) {
 
-label.onclick = () => {
+            map.fitBounds(layer.getBounds(), {
+              animate: true,
+              duration: 1.5
+            });
 
-  geoLayer.eachLayer(layer => {
-    if(layer.feature.properties.name === name) {
+            layer.openPopup();
+          }
+        });
+      };
 
-      map.fitBounds(layer.getBounds(), {
-        animate: true,
-        duration: 1.5
-      });
-
-      layer.openPopup();
-    }
-  });
-
-};
-
+      // COLOR INPUT
       let input = document.createElement("input");
       input.type = "color";
       input.value = stateColors[name];
+      input.style.cursor = "pointer";
+
+      input.onclick = (e) => {
+        e.stopPropagation();
+      };
 
       input.oninput = (e) => {
         stateColors[name] = e.target.value;
         geoLayer.setStyle(styleFeature);
       };
 
-      row.appendChild(label);
-      row.appendChild(input);
-      panel.appendChild(row);
+      div.appendChild(label);
+      div.appendChild(input);
+      container.appendChild(div);
     });
 
     // ======================
-    // LEGEND (DOĞRU YER)
+    // LEGEND
     // ======================
     let legend = L.control({ position: "bottomright" });
 
     legend.onAdd = function () {
       let div = L.DomUtil.create("div", "legend");
-
       div.innerHTML = "<h4>Legend</h4>";
 
       data.features.forEach(f => {
@@ -332,9 +327,7 @@ label.onclick = () => {
 
     legend.addTo(map);
 
-    // ======================
-    // HARİTA AÇILINCA TAM GÖSTER
-    // ======================
+    // başlangıç zoom
     map.fitBounds(geoLayer.getBounds());
 
 });
