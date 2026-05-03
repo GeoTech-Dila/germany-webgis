@@ -38,7 +38,7 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   position:relative;
 }
 
-/* 🔥 BÜYÜK TOOL PANEL */
+/* 🔥 TOOL PANEL */
 #drawTools{
   position:absolute;
   top:90px;
@@ -49,7 +49,8 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   padding:14px;
   border-radius:14px;
 
-  display:flex;
+  display:none; /* 🔥 sadece layers'ta açılacak */
+
   flex-direction:column;
   gap:10px;
 
@@ -146,12 +147,12 @@ input[type="range"] {
 
 <div id="map">
 
-  <!-- 🔥 TOOL PANEL EKLENDİ -->
-  <div id="drawTools">
-    <button onclick="startPolygon()">📐 Alan Hesapla</button>
-    <button onclick="startLine()">📏 Uzunluk Ölç</button>
-    <button onclick="clearDraw()">🧹 Temizle</button>
-  </div>
+<!-- 🔥 TOOL PANEL -->
+<div id="drawTools">
+  <button onclick="startPolygon()">📐 Alan Hesapla</button>
+  <button onclick="startLine()">📏 Uzunluk Ölç</button>
+  <button onclick="clearDraw()">🧹 Temizle</button>
+</div>
 
 </div>
 
@@ -163,10 +164,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').add
 let geoLayer, layerMap={}, stateColors={}, opacityMap={};
 let charts={}, chartData={}, animationInterval=null;
 
-/* ======================
-   🔥 TOOL JS EKLENDİ
-====================== */
-
+/* 🔥 DRAW TOOL JS */
 let drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
@@ -222,12 +220,24 @@ map.on(L.Draw.Event.CREATED, function (e) {
 
 });
 
-/* ======================
-   SENİN KODUN AYNEN DEVAM
-====================== */
+/* 🔥 SADECE BURASI GÜNCELLENDİ */
+function switchTab(tab){
+  document.getElementById("layersTab").style.display="none";
+  document.getElementById("analysisTab").style.display="none";
+  document.getElementById(tab+"Tab").style.display="block";
 
-/* buradan sonrası sende zaten var → değiştirmedim */
+  let tools = document.getElementById("drawTools");
 
+  if(tab==="layers"){
+    stopAnimation();
+    resetLayerStyle();
+    tools.style.display = "flex";   // 🔥 aç
+  } else {
+    tools.style.display = "none";   // 🔥 kapat
+  }
+}
+
+/* GERİ KALAN KODUN AYNEN DEVAM */
 </script>
 </body>
 </html>
