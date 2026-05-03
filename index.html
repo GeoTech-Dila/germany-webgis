@@ -19,7 +19,7 @@ body { margin:0; display:flex; font-family:Segoe UI; }
 }
 
 #sidebar {
-  width:340px; /* 🔥 biraz genişlettik */
+  width:340px;
   margin-top:60px;
   height:calc(100vh - 60px);
   background:#1e1e2f;
@@ -70,7 +70,6 @@ input[type="range"] {
   border-radius:8px;
 }
 
-/* 🔥 ANALYSIS CARD */
 .analysis-card{
   background:#2a2a40;
   padding:16px;
@@ -81,14 +80,17 @@ input[type="range"] {
   gap:12px;
 }
 
-/* 🔥 CANVAS */
-canvas {
+/* 🔥 LINE BÜYÜTÜLDÜ */
+#chart_area{
   width:100% !important;
-  height:180px !important;
+  height:260px !important;
 }
 
+/* 🔥 PIE DÜZELTİLDİ */
 #pie_area{
-  height:240px !important;
+  height:260px !important;
+  max-width:260px;
+  margin:auto;
 }
 </style>
 </head>
@@ -124,11 +126,6 @@ function randomColor(){
   return `hsl(${Math.random()*360},70%,60%)`;
 }
 
-function getValue(f,type){
-  let area = f.properties.area_ha || 1;
-  if(type==="area") return area;
-}
-
 function resetLayerStyle(){
   geoLayer.eachLayer(l=>{
     let n=l.feature.properties.name;
@@ -151,9 +148,6 @@ function switchTab(tab){
   }
 }
 
-// ======================
-// ANALYSIS UI
-// ======================
 function buildAnalysisUI(data){
 
   let container = document.getElementById("analysisTab");
@@ -187,21 +181,8 @@ function buildAnalysisUI(data){
   container.appendChild(div);
 
   createCharts(data);
-
-  let info = document.createElement("div");
-  info.className = "desc";
-  info.innerHTML = `
-  <b>📌 Veri ve Hesaplama Yöntemi</b><br>
-  Bu projede kullanılan eyalet alan (hektar) verisi doğrudan web harita üzerinde hesaplanmamış, veri hazırlama sürecinde önceden üretilmiştir.
-  Eyalet sınırları vektör veri formatında (GeoJSON veya Shapefile) olup her eyalet çokgen geometrisi olarak temsil edilmektedir.
-  Alan hesaplamaları Python ve GeoPandas kullanılarak gerçekleştirilmiştir.
-  `;
-  container.appendChild(info);
 }
 
-// ======================
-// CHARTS
-// ======================
 function createCharts(data){
 
   let sorted = [...data.features].sort((a,b)=> a.properties.area_ha - b.properties.area_ha);
@@ -211,7 +192,7 @@ function createCharts(data){
 
   chartData["area"] = {labels, values};
 
-  // 🔥 GELİŞMİŞ LINE
+  // 🔥 LINE FIX
   charts["area"] = new Chart(document.getElementById("chart_area"),{
     type:"line",
     data:{
@@ -219,11 +200,10 @@ function createCharts(data){
       datasets:[{
         data:values,
         borderColor:"#ff00cc",
-        backgroundColor:"rgba(255,0,204,0.15)",
-        tension:0.35,
-        pointRadius:5,
-        pointHoverRadius:7,
-        pointBackgroundColor:"#fff",
+        backgroundColor:"rgba(255,0,204,0.2)",
+        fill:true,
+        tension:0.4,
+        pointRadius:4,
         borderWidth:2
       }]
     },
@@ -235,22 +215,24 @@ function createCharts(data){
         x:{
           ticks:{
             color:"#ccc",
-            maxRotation:45,
-            minRotation:45,
+            maxRotation:0,
             autoSkip:true,
-            maxTicksLimit:8
+            maxTicksLimit:6
           },
-          grid:{color:"#333"}
+          grid:{display:false}
         },
         y:{
-          ticks:{color:"#ccc"},
-          grid:{color:"#333"}
+          ticks:{
+            color:"#ccc",
+            callback: v => (v/1000000).toFixed(1)+"M"
+          },
+          grid:{color:"rgba(255,255,255,0.05)"}
         }
       }
     }
   });
 
-  // 🔥 GELİŞMİŞ PIE
+  // 🔥 PIE FIX
   charts["pie"] = new Chart(document.getElementById("pie_area"),{
     type:"doughnut",
     data:{
@@ -264,16 +246,13 @@ function createCharts(data){
     },
     options:{
       responsive:true,
-      maintainAspectRatio:false,
+      maintainAspectRatio:true,
       plugins:{legend:{display:false}},
-      cutout:"60%"
+      cutout:"65%"
     }
   });
 }
 
-// ======================
-// ANIMATION
-// ======================
 function startAnimation(type){
 
   if(animationInterval) clearInterval(animationInterval);
@@ -322,9 +301,6 @@ function stopAnimation(){
   }
 }
 
-// ======================
-// DATA
-// ======================
 fetch("https://germany-webgis-1.onrender.com/states")
 .then(r=>r.json())
 .then(data=>{
