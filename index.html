@@ -116,8 +116,15 @@ body {
 
 <div id="analysisTab" class="tabContent" style="display:none;">
   <h3>📊 Analysis</h3>
+
+  <select id="analysisType" style="width:100%; margin-bottom:10px;">
+    <option value="density">Yoğunluk</option>
+    <option value="population">Nüfus</option>
+    <option value="area">Alan</option>
+  </select>
+
   <div id="analysisBox">
-    <p>Bir eyalet seç...</p>
+    <p>Analiz seç...</p>
   </div>
 </div>
 
@@ -144,7 +151,6 @@ let geoLayer;
 let stateColors = {};
 let layerMap = {};
 
-// 🔥 örnek nüfus verisi
 let populationData = {
   "Bayern": 13124737,
   "Berlin": 3669491,
@@ -152,53 +158,70 @@ let populationData = {
   "Hamburg": 1841179
 };
 
-// 🎯 ANALİZ FONKSİYONU
-function updateAnalysis(feature){
-  let name = feature.properties.name;
-  let area = feature.properties.area_ha || 0;
-  let pop = populationData[name];
+// 🔥 ANALİZ METNİ
+function generateAnalysisText(type, data){
 
-  let density = pop && area ? (pop/area).toFixed(2) : null;
+  let results = [];
+
+  data.features.forEach(f=>{
+    let name = f.properties.name;
+    let area = f.properties.area_ha || 0;
+    let pop = populationData[name] || 0;
+
+    let value = 0;
+
+    if(type === "density") value = pop / area;
+    if(type === "population") value = pop;
+    if(type === "area") value = area;
+
+    results.push({name, value});
+  });
+
+  results.sort((a,b)=>b.value - a.value);
+
+  let max = results[0];
+  let min = results[results.length-1];
+  let avg = results.reduce((s,r)=>s+r.value,0) / results.length;
+
+  let yorum = {
+    density: "Yoğunluk, nüfus baskısını gösterir.",
+    population: "Nüfus dağılımını gösterir.",
+    area: "Alan büyüklüğünü gösterir."
+  };
 
   document.getElementById("analysisBox").innerHTML = `
-    <b>${name}</b><br><br>
-    🌍 Alan: ${area.toLocaleString()} ha<br>
-    👥 Nüfus: ${pop ? pop.toLocaleString() : "?"}<br>
-    📊 Yoğunluk: ${density ? density + " kişi/ha" : "?"}
+    🔝 En yüksek: <b>${max.name}</b> (${max.value.toFixed(2)})<br>
+    🔻 En düşük: <b>${min.name}</b> (${min.value.toFixed(2)})<br>
+    📈 Ortalama: ${avg.toFixed(2)}<br><br>
+    🧠 ${yorum[type]}
   `;
 }
 
-function getColor(name){
-  const colors = ["#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33"];
-  return colors[name.charCodeAt(0)%colors.length];
-}
+// ANALİZ EVENT
+document.getElementById("analysisType").addEventListener("change", e=>{
+  generateAnalysisText(e.target.value, globalData);
+});
 
-function styleFeature(f){
-  return {
-    color:"#222",
-    weight:1,
-    fillColor: stateColors[f.properties.name] || getColor(f.properties.name),
-    fillOpacity:0.7
-  };
-}
+let globalData;
 
 // DATA
 fetch("https://germany-webgis-1.onrender.com/states")
 .then(r=>r.json())
 .then(data=>{
 
+  globalData = data;
+
   geoLayer = L.geoJSON(data,{
-    style:styleFeature,
+    style: f=>({color:"#222",weight:1,fillOpacity:0.7}),
     onEachFeature:(f,l)=>{
 
       layerMap[f.properties.name] = l;
 
-      l.bindPopup(`<b>${f.properties.name}</b><br>🌍 ${f.properties.area_ha?.toLocaleString() || "?"} ha`);
+      l.bindPopup(`<b>${f.properties.name}</b>`);
 
       l.on({
         mouseover:e=>e.target.setStyle({weight:3,color:"#00ffff"}),
-        mouseout:e=>geoLayer.resetStyle(e.target),
-        click:()=>updateAnalysis(f)
+        mouseout:e=>geoLayer.resetStyle(e.target)
       });
 
     }
@@ -209,29 +232,19 @@ fetch("https://germany-webgis-1.onrender.com/states")
   data.features.forEach(f=>{
 
     let name = f.properties.name;
-    stateColors[name]=getColor(name);
 
     let div = document.createElement("div");
     div.className="item";
 
-    // 👁️
     let eye = document.createElement("span");
     eye.innerText="👁️";
-    eye.style.cursor="pointer";
 
     let visible=true;
-
-    eye.onclick=(e)=>{
+    eye.onclick=e=>{
       e.stopPropagation();
       let layer=layerMap[name];
-
-      if(visible){
-        map.removeLayer(layer);
-        eye.innerText="🚫";
-      }else{
-        map.addLayer(layer);
-        eye.innerText="👁️";
-      }
+      visible ? map.removeLayer(layer) : map.addLayer(layer);
+      eye.innerText = visible ? "🚫" : "👁️";
       visible=!visible;
     };
 
@@ -239,43 +252,22 @@ fetch("https://germany-webgis-1.onrender.com/states")
     label.innerText=name;
 
     label.onclick=()=>{
-      document.querySelectorAll(".item").forEach(e=>e.classList.remove("active"));
-      div.classList.add("active");
-
       let layer=layerMap[name];
       let b=layer.getBounds();
-
-      map.fitBounds(b,{padding:[50,50]});
+      map.fitBounds(b);
       map.panTo(b.getCenter());
       layer.openPopup();
-
-      updateAnalysis(f);
     };
 
-    let input=document.createElement("input");
-    input.type="color";
-    input.value=stateColors[name];
-
-    input.onclick=e=>e.stopPropagation();
-    input.oninput=e=>{
-      stateColors[name]=e.target.value;
-      geoLayer.setStyle(styleFeature);
-    };
-
-    let left=document.createElement("div");
-    left.style.display="flex";
-    left.style.gap="6px";
-
-    left.appendChild(eye);
-    left.appendChild(label);
-
-    div.appendChild(left);
-    div.appendChild(input);
+    div.appendChild(eye);
+    div.appendChild(label);
     container.appendChild(div);
-
   });
 
   map.fitBounds(geoLayer.getBounds());
+
+  // 🔥 ilk analiz
+  generateAnalysisText("density", data);
 
 });
 </script>
