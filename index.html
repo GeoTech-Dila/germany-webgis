@@ -158,7 +158,7 @@ opacitySlider.addEventListener("input", function(e) {
 // ======================
 // GEOJSON MAP
 // ======================
-fetch("http://127.0.0.1:8000/states")
+fetch("https://germany-api.onrender.com/states")
   .then(r => r.json())
   .then(data => {
 
@@ -232,7 +232,7 @@ fetch("http://127.0.0.1:8000/states")
 // ======================
 // DASHBOARD LIST
 // ======================
-fetch("http://127.0.0.1:8000/states_list")
+fetch("https://germany-api.onrender.com/states_list")
   .then(r => r.json())
   .then(list => {
 
