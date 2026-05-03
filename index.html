@@ -86,12 +86,11 @@ body {
   background: #1e3a3a;
 }
 
-/* LEGEND */
-.legend {
-  background: rgba(30,30,47,0.9);
-  padding: 10px;
-  border-radius: 8px;
-  color: white;
+/* ANALYSIS BOX */
+#analysisBox {
+  background:#2a2a40;
+  padding:10px;
+  border-radius:8px;
 }
 
 </style>
@@ -108,7 +107,6 @@ body {
 
 <div id="tabs">
   <button class="tab active" onclick="switchTab('layers')">Layers</button>
-  <button class="tab" onclick="switchTab('legend')">Legend</button>
   <button class="tab" onclick="switchTab('analysis')">Analysis</button>
 </div>
 
@@ -116,10 +114,11 @@ body {
   <div id="list"></div>
 </div>
 
-<div id="legendTab" class="tabContent" style="display:none;"></div>
-
 <div id="analysisTab" class="tabContent" style="display:none;">
-  <p>Analiz paneli yakında...</p>
+  <h3>📊 Analysis</h3>
+  <div id="analysisBox">
+    <p>Bir eyalet seç...</p>
+  </div>
 </div>
 
 </div>
@@ -139,12 +138,35 @@ function switchTab(tab){
 
 // MAP
 var map = L.map('map').setView([51, 10], 6);
-
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
 let geoLayer;
 let stateColors = {};
-let layerMap = {}; // 🔥 layer saklama
+let layerMap = {};
+
+// 🔥 örnek nüfus verisi
+let populationData = {
+  "Bayern": 13124737,
+  "Berlin": 3669491,
+  "Hessen": 6293154,
+  "Hamburg": 1841179
+};
+
+// 🎯 ANALİZ FONKSİYONU
+function updateAnalysis(feature){
+  let name = feature.properties.name;
+  let area = feature.properties.area_ha || 0;
+  let pop = populationData[name];
+
+  let density = pop && area ? (pop/area).toFixed(2) : null;
+
+  document.getElementById("analysisBox").innerHTML = `
+    <b>${name}</b><br><br>
+    🌍 Alan: ${area.toLocaleString()} ha<br>
+    👥 Nüfus: ${pop ? pop.toLocaleString() : "?"}<br>
+    📊 Yoğunluk: ${density ? density + " kişi/ha" : "?"}
+  `;
+}
 
 function getColor(name){
   const colors = ["#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33"];
@@ -169,13 +191,14 @@ fetch("https://germany-webgis-1.onrender.com/states")
     style:styleFeature,
     onEachFeature:(f,l)=>{
 
-      layerMap[f.properties.name] = l; // 🔥 kaydet
+      layerMap[f.properties.name] = l;
 
       l.bindPopup(`<b>${f.properties.name}</b><br>🌍 ${f.properties.area_ha?.toLocaleString() || "?"} ha`);
 
       l.on({
         mouseover:e=>e.target.setStyle({weight:3,color:"#00ffff"}),
-        mouseout:e=>geoLayer.resetStyle(e.target)
+        mouseout:e=>geoLayer.resetStyle(e.target),
+        click:()=>updateAnalysis(f)
       });
 
     }
@@ -191,27 +214,24 @@ fetch("https://germany-webgis-1.onrender.com/states")
     let div = document.createElement("div");
     div.className="item";
 
-    // 👁️ GÖZ
+    // 👁️
     let eye = document.createElement("span");
-    eye.innerText = "👁️";
-    eye.style.cursor = "pointer";
-    eye.style.marginRight = "8px";
+    eye.innerText="👁️";
+    eye.style.cursor="pointer";
 
-    let visible = true;
+    let visible=true;
 
-    eye.onclick = (e)=>{
+    eye.onclick=(e)=>{
       e.stopPropagation();
-
-      let layer = layerMap[name];
+      let layer=layerMap[name];
 
       if(visible){
         map.removeLayer(layer);
         eye.innerText="🚫";
-      } else {
+      }else{
         map.addLayer(layer);
         eye.innerText="👁️";
       }
-
       visible=!visible;
     };
 
@@ -222,14 +242,14 @@ fetch("https://germany-webgis-1.onrender.com/states")
       document.querySelectorAll(".item").forEach(e=>e.classList.remove("active"));
       div.classList.add("active");
 
-      let layer = layerMap[name];
-
-      let b = layer.getBounds();
+      let layer=layerMap[name];
+      let b=layer.getBounds();
 
       map.fitBounds(b,{padding:[50,50]});
       map.panTo(b.getCenter());
-
       layer.openPopup();
+
+      updateAnalysis(f);
     };
 
     let input=document.createElement("input");
@@ -242,10 +262,9 @@ fetch("https://germany-webgis-1.onrender.com/states")
       geoLayer.setStyle(styleFeature);
     };
 
-    // 🔥 SOL BLOK
-    let left = document.createElement("div");
+    let left=document.createElement("div");
     left.style.display="flex";
-    left.style.alignItems="center";
+    left.style.gap="6px";
 
     left.appendChild(eye);
     left.appendChild(label);
