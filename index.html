@@ -65,16 +65,17 @@
        LIST ITEM
     ====================== */
     .item {
-      padding: 8px;
-      margin: 5px 0;
-      background: white;
-      cursor: pointer;
-      border-radius: 5px;
-    }
+  padding: 8px;
+  margin: 6px 0;
+  background: #2a2a40;
+  color: white;
+  cursor: pointer;
+  border-radius: 6px;
+}
 
-    .item:hover {
-      background: #ddd;
-    }
+.item:hover {
+  background: #3a3a55;
+}
 
     /* ======================
        COLOR INPUT FIX
@@ -122,7 +123,7 @@ input[type="range"] {
   <hr style="border: 1px solid #333;">
 
   <h3>🗺️ Eyalet Renkleri</h3>
-  <div id="colorPanel"></div>
+
 
   <h3>📍 Eyalet Listesi</h3>
   <div id="list"></div>
@@ -333,25 +334,45 @@ fetch("https://germany-webgis-1.onrender.com/states_list")
 
       let div = document.createElement("div");
       div.className = "item";
-      div.innerHTML = name;
 
-      div.onclick = () => {
+      // 🔥 FLEX yapı
+      div.style.display = "flex";
+      div.style.justifyContent = "space-between";
+      div.style.alignItems = "center";
 
-  geoLayer.eachLayer(layer => {
-    if(layer.feature.properties.name === name) {
+      // 🎯 Eyalet adı
+      let label = document.createElement("span");
+      label.innerText = name;
 
-      map.fitBounds(layer.getBounds(), {
-        animate: true,
-        duration: 1.5
-      });
+      // 🎨 renk seçici
+      let input = document.createElement("input");
+      input.type = "color";
+      input.value = stateColors[name] || getColor(name);
 
-      layer.openPopup();
-    }
-  });
+      input.oninput = (e) => {
+        stateColors[name] = e.target.value;
+        geoLayer.setStyle(styleFeature);
+      };
 
-};
+      // 🧠 tıklama (zoom)
+      label.onclick = () => {
+        geoLayer.eachLayer(layer => {
+          if(layer.feature.properties.name === name) {
 
-container.appendChild(div);
+            map.fitBounds(layer.getBounds(), {
+              animate: true,
+              duration: 1.5
+            });
+
+            layer.openPopup();
+          }
+        });
+      };
+
+      div.appendChild(label);
+      div.appendChild(input);
+
+      container.appendChild(div);
     });
 
   });
