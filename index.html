@@ -153,6 +153,12 @@ function buildAnalysisUI(data){
   let div = document.createElement("div");
   div.className="analysis-card";
 
+let hint = document.createElement("div");
+hint.innerText = "Alan analizi kutucuğuna tıkla ve analiz animasyonu başlasın";
+hint.style.fontSize = "11px";
+hint.style.color = "#aaa";
+hint.style.marginBottom = "6px";
+
   let title = document.createElement("div");
   title.innerText = "📊 Alan Analizi";
   title.style.cursor="pointer";
@@ -173,7 +179,7 @@ function buildAnalysisUI(data){
   desc.id = "areaDesc";
   desc.className = "desc";
 
-  div.append(title, lineCanvas, pieCanvas, desc);
+  div.append(hint, title, lineCanvas, pieCanvas, desc);
   container.appendChild(div);
 
   createCharts(data);
