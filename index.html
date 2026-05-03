@@ -211,84 +211,62 @@ function createCharts(data){
 
   chartData["area"] = {labels, values};
 
-  // 🎨 GRADIENT
-  const ctx = document.getElementById("chart_area").getContext("2d");
-  const gradient = ctx.createLinearGradient(0,0,0,200);
-
-  gradient.addColorStop(0,"rgba(255,0,204,0.6)");
-  gradient.addColorStop(1,"rgba(255,0,204,0)");
-
-  // 🔥 MODERN LINE CHART
-  charts["area"] = new Chart(ctx,{
+  // 🔥 GELİŞMİŞ LINE
+  charts["area"] = new Chart(document.getElementById("chart_area"),{
     type:"line",
     data:{
       labels,
       datasets:[{
         data:values,
         borderColor:"#ff00cc",
-        backgroundColor:gradient,
-        fill:true,
-        tension:0.45,
-        pointRadius:0,
-        pointHoverRadius:6,
-        borderWidth:3
+        backgroundColor:"rgba(255,0,204,0.15)",
+        tension:0.35,
+        pointRadius:5,
+        pointHoverRadius:7,
+        pointBackgroundColor:"#fff",
+        borderWidth:2
       }]
     },
     options:{
       responsive:true,
       maintainAspectRatio:false,
-
-      plugins:{
-        legend:{display:false},
-        tooltip:{
-          backgroundColor:"#111",
-          borderColor:"#ff00cc",
-          borderWidth:1
-        }
-      },
-
+      plugins:{legend:{display:false}},
       scales:{
         x:{
           ticks:{
-            color:"#aaa",
-            maxRotation:0,
+            color:"#ccc",
+            maxRotation:45,
+            minRotation:45,
             autoSkip:true,
-            maxTicksLimit:6
+            maxTicksLimit:8
           },
-          grid:{display:false}
+          grid:{color:"#333"}
         },
         y:{
-          ticks:{color:"#aaa"},
-          grid:{
-            color:"rgba(255,255,255,0.05)"
-          }
+          ticks:{color:"#ccc"},
+          grid:{color:"#333"}
         }
       }
     }
   });
 
-  // 🔥 MODERN DONUT
+  // 🔥 GELİŞMİŞ PIE
   charts["pie"] = new Chart(document.getElementById("pie_area"),{
     type:"doughnut",
     data:{
       labels,
       datasets:[{
         data:values,
-        backgroundColor: labels.map(()=>"#1f1f2f"),
-        borderColor:"#2f2f3a",
-        borderWidth:2,
-        hoverOffset:6
+        backgroundColor: labels.map(()=>"#2f2f3a"),
+        borderColor:"#555",
+        borderWidth:1.5
       }]
     },
     options:{
       responsive:true,
       maintainAspectRatio:false,
-
-      plugins:{
-        legend:{display:false}
-      },
-
-      cutout:"70%" // 🔥 daha modern ince halka
+      plugins:{legend:{display:false}},
+      cutout:"60%"
     }
   });
 }
@@ -327,11 +305,9 @@ function startAnimation(type){
     charts[type].update();
 
     charts["pie"].data.datasets[0].backgroundColor =
-  labels.map((l,idx)=>
-    idx===i ? "#ff00cc" : "#1f1f2f"
-  );
+      labels.map((l,idx)=> idx===i ? "#ff00cc" : "#2f2f3a");
 
-charts["pie"].update();
+    charts["pie"].update();
 
     i++;
     if(i>=layers.length) i=0;
