@@ -1,89 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Germany WebGIS Dashboard</title>
+<meta charset="UTF-8">
+<title>Germany WebGIS Dashboard</title>
 
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      display: flex;
-      font-family: "Segoe UI", Arial, sans-serif;
-    }
+<style>
 
-    #sidebar {
-  width: 320px;
-  height: calc(100vh - 60px); /* 👈 header için boşluk */
-  margin-top: 60px;           /* 👈 header’ın altına it */
-  overflow: auto;
-  background: #1e1e2f;
-  color: white;
-  padding: 15px;
+body {
+  margin: 0;
+  display: flex;
+  font-family: "Segoe UI", Arial, sans-serif;
 }
 
-    #map {
-  flex: 1;
-  height: calc(100vh - 60px); /* 👈 header boşluğu */
-  margin-top: 60px;           /* 👈 aşağı kaydır */
-  animation: fadeIn 1s ease-in;
-}
-
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
-
-    .item {
-      padding: 8px;
-      margin: 6px 0;
-      background: #2a2a40;
-      color: white;
-      border-radius: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .item:hover {
-      background: #3a3a55;
-    }
-
-    input[type="color"] {
-      width: 30px;
-      height: 25px;
-      border: none;
-      cursor: pointer;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: #00ffff;
-    }
-
-    .legend {
-      background: rgba(30,30,47,0.9);
-      padding: 10px;
-      border-radius: 8px;
-      color: white;
-      font-size: 12px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-
-    .legend h4 {
-      margin: 0 0 8px 0;
-      color: #00ffff;
-    }
-    /* ======================
-   HEADER (TOP BAR)
-====================== */
+/* HEADER */
 #header {
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
   height: 60px;
   background: #121222;
@@ -91,197 +26,204 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
-  z-index: 1000;
-  border-bottom: 1px solid #333;
-}
-
-#header .logo {
-  font-weight: bold;
-  color: #00ffff;
-  font-size: 18px;
-}
-
-#header .title {
   color: white;
-  font-size: 16px;
+  z-index: 1000;
 }
-  </style>
+
+/* SIDEBAR */
+#sidebar {
+  width: 320px;
+  margin-top: 60px;
+  height: calc(100vh - 60px);
+  background: #1e1e2f;
+  padding: 15px;
+  color: white;
+  overflow: auto;
+}
+
+/* MAP */
+#map {
+  flex: 1;
+  margin-top: 60px;
+  height: calc(100vh - 60px);
+}
+
+/* TABS */
+#tabs {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.tab {
+  flex: 1;
+  padding: 8px;
+  background: #2a2a40;
+  border: none;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.tab.active {
+  background: #00ffff;
+  color: black;
+}
+
+/* LIST */
+.item {
+  padding: 10px;
+  margin: 6px 0;
+  background: #2a2a40;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.item.active {
+  border: 1px solid #00ffff;
+  background: #1e3a3a;
+}
+
+/* LEGEND */
+.legend {
+  background: rgba(30,30,47,0.9);
+  padding: 10px;
+  border-radius: 8px;
+  color: white;
+}
+
+</style>
 </head>
 
 <body>
 
 <div id="header">
-  <div class="logo">🌍 GeoTech Dila</div>
-  <div class="title">Germany WebGIS Dashboard</div>
+  <div>🌍 GeoTech Dila</div>
+  <div>Germany WebGIS Dashboard</div>
 </div>
 
 <div id="sidebar">
-  <h2 style="color:#00ffff;">🌍 WebGIS Dashboard</h2>
 
-  <h3>📍 Eyalet Listesi</h3>
+<div id="tabs">
+  <button class="tab active" onclick="switchTab('layers')">Layers</button>
+  <button class="tab" onclick="switchTab('legend')">Legend</button>
+  <button class="tab" onclick="switchTab('analysis')">Analysis</button>
+</div>
+
+<div id="layersTab" class="tabContent">
   <div id="list"></div>
+</div>
 
-  <h4>🎚️ Saydamlık</h4>
-  <input id="opacitySlider" type="range" min="0.1" max="1" step="0.1" value="0.7">
+<div id="legendTab" class="tabContent" style="display:none;"></div>
+
+<div id="analysisTab" class="tabContent" style="display:none;">
+  <p>Analiz paneli yakında...</p>
+</div>
+
 </div>
 
 <div id="map"></div>
 
 <script>
 
-// ======================
-// HARİTA
-// ======================
+// TAB SWITCH
+function switchTab(tab){
+  document.querySelectorAll(".tabContent").forEach(e=>e.style.display="none");
+  document.querySelectorAll(".tab").forEach(e=>e.classList.remove("active"));
+
+  document.getElementById(tab+"Tab").style.display="block";
+  event.target.classList.add("active");
+}
+
+// MAP
 var map = L.map('map').setView([51, 10], 6);
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-// ======================
 let geoLayer;
 let stateColors = {};
 
-// ======================
-function getColor(name) {
+function getColor(name){
   const colors = ["#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33"];
-  return colors[name.charCodeAt(0) % colors.length];
+  return colors[name.charCodeAt(0)%colors.length];
 }
 
-// ======================
-function styleFeature(feature) {
+function styleFeature(f){
   return {
-    color: "#222",
-    weight: 1,
-    fillColor: stateColors[feature.properties.name] || getColor(feature.properties.name),
-    fillOpacity: 0.7
+    color:"#222",
+    weight:1,
+    fillColor: stateColors[f.properties.name] || getColor(f.properties.name),
+    fillOpacity:0.7
   };
 }
 
-// ======================
-// OPACITY
-// ======================
-document.getElementById("opacitySlider").addEventListener("input", e => {
-  let val = parseFloat(e.target.value);
-
-  geoLayer.setStyle(f => ({
-    color: "#222",
-    weight: 1,
-    fillColor: stateColors[f.properties.name] || getColor(f.properties.name),
-    fillOpacity: val
-  }));
-});
-
-// ======================
-// GEOJSON
-// ======================
+// DATA
 fetch("https://germany-webgis-1.onrender.com/states")
-  .then(r => r.json())
-  .then(data => {
+.then(r=>r.json())
+.then(data=>{
 
-    geoLayer = L.geoJSON(data, {
+  geoLayer = L.geoJSON(data,{
+    style:styleFeature,
+    onEachFeature:(f,l)=>{
 
-      style: styleFeature,
+      l.bindPopup(`<b>${f.properties.name}</b><br>🌍 ${f.properties.area_ha?.toLocaleString() || "?"} ha`);
 
-      onEachFeature: function(feature, layer) {
-
-        layer.bindPopup(`
-          <b>${feature.properties.name}</b><br>
-          🌍 ${feature.properties.area_ha
-            ? feature.properties.area_ha.toLocaleString() + " ha"
-            : "bilgi yok"}
-        `);
-
-        layer.on({
-          mouseover: e => {
-            e.target.setStyle({
-              weight: 3,
-              color: "#00ffff",
-              fillOpacity: 1
-            });
-          },
-          mouseout: e => geoLayer.resetStyle(e.target)
-        });
-      }
-
-    }).addTo(map);
-
-    // ======================
-    // LİSTE + RENK + ZOOM
-    // ======================
-    let container = document.getElementById("list");
-
-    data.features.forEach(f => {
-
-      let name = f.properties.name;
-      stateColors[name] = getColor(name);
-
-      let div = document.createElement("div");
-      div.className = "item";
-
-      let label = document.createElement("span");
-      label.innerText = name;
-      label.style.cursor = "pointer";
-
-      label.onclick = () => {
-  geoLayer.eachLayer(layer => {
-    if(layer.feature.properties.name === name) {
-
-      let bounds = layer.getBounds();
-
-      map.fitBounds(bounds, {
-        padding: [50, 50],
-        animate: true,
-        duration: 1.5
+      l.on({
+        mouseover:e=>e.target.setStyle({weight:3,color:"#00ffff"}),
+        mouseout:e=>geoLayer.resetStyle(e.target)
       });
 
-      map.panTo(bounds.getCenter());
-
-      layer.openPopup();
     }
-  });
-};
+  }).addTo(map);
 
-      let input = document.createElement("input");
-      input.type = "color";
-      input.value = stateColors[name];
+  let container = document.getElementById("list");
 
-      input.onclick = e => e.stopPropagation();
+  data.features.forEach(f=>{
 
-      input.oninput = e => {
-        stateColors[name] = e.target.value;
-        geoLayer.setStyle(styleFeature);
-      };
+    let name = f.properties.name;
+    stateColors[name]=getColor(name);
 
-      div.appendChild(label);
-      div.appendChild(input);
-      container.appendChild(div);
-    });
+    let div = document.createElement("div");
+    div.className="item";
 
-    // ======================
-    // LEGEND
-    // ======================
-    let legend = L.control({ position: "bottomright" });
+    let label = document.createElement("span");
+    label.innerText=name;
 
-    legend.onAdd = function () {
-      let div = L.DomUtil.create("div", "legend");
-      div.innerHTML = "<h4>Legend</h4>";
+    label.onclick=()=>{
+      document.querySelectorAll(".item").forEach(e=>e.classList.remove("active"));
+      div.classList.add("active");
 
-      data.features.forEach(f => {
-        div.innerHTML += `
-          <div>
-            <span style="background:${stateColors[f.properties.name]}; width:15px; height:15px; display:inline-block;"></span>
-            ${f.properties.name}
-          </div>
-        `;
+      geoLayer.eachLayer(l=>{
+        if(l.feature.properties.name===name){
+          let b=l.getBounds();
+          map.fitBounds(b,{padding:[50,50]});
+          map.panTo(b.getCenter());
+          l.openPopup();
+        }
       });
-
-      return div;
     };
 
-    legend.addTo(map);
+    let input=document.createElement("input");
+    input.type="color";
+    input.value=stateColors[name];
 
-    map.fitBounds(geoLayer.getBounds());
+    input.onclick=e=>e.stopPropagation();
+    input.oninput=e=>{
+      stateColors[name]=e.target.value;
+      geoLayer.setStyle(styleFeature);
+    };
+
+    div.appendChild(label);
+    div.appendChild(input);
+    container.appendChild(div);
+
+  });
+
+  map.fitBounds(geoLayer.getBounds());
+
 });
-
 </script>
 
 </body>
