@@ -223,27 +223,36 @@ function createCharts(data){
       }]
     },
     options:{
-      responsive:true,
-      maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{
-          ticks:{
-            color:"#ccc",
-            autoSkip:true,
-            maxTicksLimit:6
-          },
-          grid:{display:false}
+  responsive:true,
+  maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{
+      ticks:{
+        color:"#eee",
+        font:{
+          size:11,
+          weight:"500"
         },
-        y:{
-          ticks:{
-            color:"#ccc",
-            callback: v => (v/1000000).toFixed(1)+"M"
-          },
-          grid:{color:"rgba(255,255,255,0.05)"}
-        }
-      }
+        maxRotation:40,   // 🔥 eğim verildi
+        minRotation:40,
+        autoSkip:true,
+        maxTicksLimit:7
+      },
+      grid:{display:false}
+    },
+    y:{
+      ticks:{
+        color:"#eee",
+        font:{
+          size:11
+        },
+        callback: v => (v/1000000).toFixed(1)+"M"
+      },
+      grid:{color:"rgba(255,255,255,0.08)"}
     }
+  }
+}
   });
 
   // 🍩 PIE GERİ GELDİ
