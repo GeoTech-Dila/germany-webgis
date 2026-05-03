@@ -11,6 +11,7 @@
 
 body { margin:0; display:flex; font-family:Segoe UI; }
 
+/* HEADER */
 #header {
   position:fixed; top:0; width:100%; height:60px;
   background:#121222; color:white;
@@ -18,6 +19,7 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   padding:0 20px;
 }
 
+/* SIDEBAR */
 #sidebar {
   width:320px; margin-top:60px;
   height:calc(100vh - 60px);
@@ -25,21 +27,61 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   overflow:auto;
 }
 
+/* MAP */
 #map {
   flex:1; margin-top:60px;
   height:calc(100vh - 60px);
 }
 
+/* TABS */
 .tab { padding:8px; margin:3px; cursor:pointer; background:#2a2a40; }
 .tab.active { background:#00ffff; color:black; }
 
+/* GRID ITEM */
 .item {
-  display:flex; justify-content:space-between;
-  padding:8px; background:#2a2a40;
-  margin:5px 0; border-radius:5px;
+  display:grid;
+  grid-template-columns: 1fr 40px 120px;
+  align-items:center;
+  gap:10px;
+
+  padding:10px;
+  margin:6px 0;
+  background:#2a2a40;
+  border-radius:8px;
 }
 
-.legend { font-size:12px; margin-top:10px; }
+/* LEFT */
+.left {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+/* COLOR */
+input[type="color"] {
+  width:32px;
+  height:32px;
+  border:2px solid #555;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+/* SLIDER */
+input[type="range"] {
+  width:100%;
+  accent-color:#bb00ff;
+}
+
+/* EYE */
+.eye {
+  cursor:pointer;
+}
+
+/* LEGEND */
+.legend {
+  margin-top:10px;
+  font-size:12px;
+}
 
 </style>
 </head>
@@ -70,7 +112,7 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   <option value="area">Alan</option>
 </select>
 
-<div id="legend"></div>
+<div id="legend" class="legend"></div>
 
 </div>
 
@@ -102,17 +144,17 @@ let populationData = {
   "Hamburg":1841179
 };
 
-// COLOR SCALE
+// 🔥 PEMBE COLOR SCALE
 function getColor(v, breaks){
-  return v > breaks[4] ? '#800026' :
-         v > breaks[3] ? '#BD0026' :
-         v > breaks[2] ? '#E31A1C' :
-         v > breaks[1] ? '#FC4E2A' :
-         v > breaks[0] ? '#FD8D3C' :
-                         '#FEB24C';
+  return v > breaks[4] ? '#4a0033' :
+         v > breaks[3] ? '#80004d' :
+         v > breaks[2] ? '#b3006b' :
+         v > breaks[1] ? '#e60099' :
+         v > breaks[0] ? '#ff4dc4' :
+                         '#ffb3ec';
 }
 
-// ANALYSIS VALUE
+// VALUE
 function getValue(f,type){
   let area = f.properties.area_ha || 1;
   let pop = populationData[f.properties.name] || 1;
@@ -161,12 +203,15 @@ function applyAnalysis(type){
 function updateLegend(breaks){
 
   let div = document.getElementById("legend");
-  div.innerHTML = "<h4>Legend</h4>";
+  div.innerHTML = "<h4>🎨 Analiz</h4>";
 
   breaks.forEach(b=>{
     div.innerHTML += `
-      <div>
-        <span style="background:${getColor(b,breaks)};width:15px;height:15px;display:inline-block;"></span>
+      <div style="display:flex;align-items:center;margin:4px 0;">
+        <span style="
+          background:${getColor(b,breaks)};
+          width:18px;height:18px;border-radius:4px;
+          margin-right:8px;"></span>
         ${b.toFixed(2)}
       </div>
     `;
@@ -200,12 +245,36 @@ fetch("https://germany-webgis-1.onrender.com/states")
     let div=document.createElement("div");
     div.className="item";
 
+    // 👁️
+    let eye=document.createElement("span");
+    eye.innerText="👁️";
+    eye.className="eye";
+
+    let visible=true;
+
+    eye.onclick=(e)=>{
+      e.stopPropagation();
+      let layer=layerMap[name];
+
+      if(visible){
+        map.removeLayer(layer);
+        eye.innerText="🚫";
+      } else {
+        map.addLayer(layer);
+        eye.innerText="👁️";
+      }
+      visible=!visible;
+    };
+
+    // LABEL
     let label=document.createElement("span");
     label.innerText=name;
 
+    // COLOR
     let color=document.createElement("input");
     color.type="color";
 
+    // SLIDER
     let slider=document.createElement("input");
     slider.type="range";
     slider.min=0.1; slider.max=1; slider.step=0.1;
@@ -227,7 +296,14 @@ fetch("https://germany-webgis-1.onrender.com/states")
       });
     };
 
-    div.appendChild(label);
+    // LEFT
+    let left=document.createElement("div");
+    left.className="left";
+
+    left.appendChild(eye);
+    left.appendChild(label);
+
+    div.appendChild(left);
     div.appendChild(color);
     div.appendChild(slider);
 
