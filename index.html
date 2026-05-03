@@ -187,13 +187,23 @@ fetch("https://germany-webgis-1.onrender.com/states")
       label.style.cursor = "pointer";
 
       label.onclick = () => {
-        geoLayer.eachLayer(layer => {
-          if(layer.feature.properties.name === name) {
-            map.fitBounds(layer.getBounds(), {duration:1.5});
-            layer.openPopup();
-          }
-        });
-      };
+  geoLayer.eachLayer(layer => {
+    if(layer.feature.properties.name === name) {
+
+      let bounds = layer.getBounds();
+
+      map.fitBounds(bounds, {
+        padding: [50, 50],
+        animate: true,
+        duration: 1.5
+      });
+
+      map.panTo(bounds.getCenter());
+
+      layer.openPopup();
+    }
+  });
+};
 
       let input = document.createElement("input");
       input.type = "color";
