@@ -33,11 +33,9 @@ body { margin:0; display:flex; font-family:Segoe UI; }
 .tab { padding:8px; margin:3px; cursor:pointer; background:#2a2a40; }
 .tab.active { background:#00ffff; color:black; }
 
-/* GRID */
 .item {
   display:grid;
   grid-template-columns: 30px 140px 40px 1fr;
-  align-items:center;
   gap:10px;
   padding:10px;
   margin:6px 0;
@@ -45,25 +43,11 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   border-radius:8px;
 }
 
-.eye { text-align:center; cursor:pointer; }
-
-input[type="color"] {
-  width:32px; height:32px;
-  border:2px solid #555;
-  border-radius:6px;
-}
-
-input[type="range"] {
-  width:100%;
-  accent-color:#bb00ff;
-}
-
 canvas {
   background:#2a2a40;
   margin-top:10px;
   border-radius:8px;
 }
-
 </style>
 </head>
 
@@ -76,30 +60,14 @@ canvas {
 
 <div id="sidebar">
 
-<button class="tab active" onclick="switchTab('layers')">Layers</button>
-<button class="tab" onclick="switchTab('analysis')">Analysis</button>
+<button onclick="switchTab('layers')" class="tab active">Layers</button>
+<button onclick="switchTab('analysis')" class="tab">Analysis</button>
 
 <div id="layersTab">
   <div id="list"></div>
 </div>
 
-<div id="analysisTab" style="display:none;">
-
-<select id="analysisType">
-  <option value="density">Yoğunluk</option>
-  <option value="population">Nüfus</option>
-  <option value="area">Alan</option>
-</select>
-
-<div id="legend"></div>
-
-<canvas id="chart1"></canvas>
-<canvas id="chart2"></canvas>
-<canvas id="chart3"></canvas>
-
-<div id="analysisText" style="margin-top:10px;"></div>
-
-</div>
+<div id="analysisTab" style="display:none;"></div>
 
 </div>
 
@@ -107,21 +75,17 @@ canvas {
 
 <script>
 
-function switchTab(tab){
-  document.getElementById("layersTab").style.display="none";
-  document.getElementById("analysisTab").style.display="none";
-  document.getElementById(tab+"Tab").style.display="block";
-}
-
+// ======================
 // MAP
+// ======================
 var map = L.map('map').setView([51,10],6);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-let geoLayer;
-let layerMap = {};
-let stateColors = {};
-let opacityMap = {};
+let geoLayer, layerMap={}, stateColors={}, opacityMap={};
 
+// ======================
+// DATA
+// ======================
 let populationData = {
   "Bayern":13124737,
   "Berlin":3669491,
@@ -129,19 +93,11 @@ let populationData = {
   "Hamburg":1841179
 };
 
-// 🎨 RANDOM COLOR (LAYER MODE)
+// ======================
+// HELPERS
+// ======================
 function randomColor(){
   return `hsl(${Math.random()*360},70%,60%)`;
-}
-
-// ANALYSIS COLOR
-function getColor(v, breaks){
-  return v > breaks[4] ? '#4a0033' :
-         v > breaks[3] ? '#80004d' :
-         v > breaks[2] ? '#b3006b' :
-         v > breaks[1] ? '#e60099' :
-         v > breaks[0] ? '#ff4dc4' :
-                         '#ffb3ec';
 }
 
 function getValue(f,type){
@@ -153,74 +109,172 @@ function getValue(f,type){
   if(type==="area") return area;
 }
 
-function getBreaks(vals){
-  vals.sort((a,b)=>a-b);
-  return [
-    vals[3], vals[6], vals[9], vals[12], vals[15]
-  ];
-}
-
-function applyAnalysis(type){
-
-  let vals=[];
-  geoLayer.eachLayer(l=>vals.push(getValue(l.feature,type)));
-  let breaks=getBreaks(vals);
-
-  geoLayer.setStyle(f=>({
-    fillColor:getColor(getValue(f,type),breaks),
-    color:"#222", fillOpacity:0.8
-  }));
-
-  updateLegend(breaks);
-  createCharts(type);
-}
-
-function updateLegend(breaks){
-  let div=document.getElementById("legend");
-  div.innerHTML="<h4>🎨 Analiz</h4>";
-  breaks.forEach(b=>{
-    div.innerHTML+=`<div>${b.toFixed(2)}</div>`;
-  });
-}
-
-// 📊 CHARTS
-let charts=[];
-
-function createCharts(type){
-
-  charts.forEach(c=>c.destroy());
-  charts=[];
-
-  let labels=[];
-  let values=[];
-
+// ======================
+// LAYERS RESET
+// ======================
+function resetLayerStyle(){
   geoLayer.eachLayer(l=>{
-    labels.push(l.feature.properties.name);
-    values.push(getValue(l.feature,type));
-  });
-
-  function makeChart(id){
-    return new Chart(document.getElementById(id),{
-      type:'bar',
-      data:{ labels, datasets:[{ data:values }] },
-      options:{
-        animation:{ duration:2000 },
-        plugins:{ legend:{display:false} }
-      }
+    let n=l.feature.properties.name;
+    l.setStyle({
+      fillColor: stateColors[n],
+      fillOpacity: opacityMap[n],
+      color:"#222"
     });
-  }
-
-  charts.push(makeChart("chart1"));
-  charts.push(makeChart("chart2"));
-  charts.push(makeChart("chart3"));
-
-  document.getElementById("analysisText").innerHTML = `
-  Bu grafikler ${type} dağılımını göstermektedir.
-  Küçükten büyüğe sıralanmış veriler bölgesel farklılıkları ortaya koyar.
-  `;
+  });
 }
 
-// DATA
+// ======================
+// TAB SWITCH
+// ======================
+function switchTab(tab){
+  document.getElementById("layersTab").style.display="none";
+  document.getElementById("analysisTab").style.display="none";
+
+  document.getElementById(tab+"Tab").style.display="block";
+
+  if(tab==="layers"){
+    stopAnimation();
+    resetLayerStyle();
+  }
+}
+
+// ======================
+// ANALYSIS SYSTEM
+// ======================
+let charts={}, chartData={}, animationInterval=null;
+
+const analysisTypes = [
+  {key:"area", label:"Alan"},
+  {key:"population", label:"Nüfus"},
+  {key:"density", label:"Yoğunluk"}
+];
+
+// 🎯 BUILD UI
+function buildAnalysisUI(data){
+
+  let container = document.getElementById("analysisTab");
+  container.innerHTML="";
+
+  analysisTypes.forEach(type=>{
+
+    let div = document.createElement("div");
+
+    let title = document.createElement("div");
+    title.innerText = "📊 " + type.label;
+    title.style.cursor="pointer";
+    title.style.fontWeight="bold";
+
+    title.onclick = ()=> startAnimation(type.key);
+
+    let canvas = document.createElement("canvas");
+    canvas.id = "chart_"+type.key;
+
+    div.appendChild(title);
+    div.appendChild(canvas);
+
+    container.appendChild(div);
+
+  });
+
+  createCharts(data);
+}
+
+// 📊 CREATE CHARTS
+function createCharts(data){
+
+  analysisTypes.forEach(type=>{
+
+    let sorted = [...data.features].sort((a,b)=>
+      getValue(a,type.key)-getValue(b,type.key)
+    );
+
+    let labels = sorted.map(f=>f.properties.name);
+    let values = sorted.map(f=>getValue(f,type.key));
+
+    chartData[type.key] = {labels, values};
+
+    charts[type.key] = new Chart(
+      document.getElementById("chart_"+type.key),
+      {
+        type:"line",
+        data:{
+          labels,
+          datasets:[{
+            data:values,
+            borderColor:"#ff00cc",
+            backgroundColor:"rgba(255,0,204,0.2)",
+            tension:0.4,
+            pointRadius:4,
+            pointBackgroundColor:"#fff"
+          }]
+        },
+        options:{
+          plugins:{legend:{display:false}}
+        }
+      }
+    );
+
+  });
+
+}
+
+// 🌟 ANIMATION
+function startAnimation(type){
+
+  if(animationInterval) clearInterval(animationInterval);
+
+  let layers=[];
+  geoLayer.eachLayer(l=>layers.push(l));
+
+  layers.sort((a,b)=> getValue(a.feature,type)-getValue(b.feature,type));
+
+  let i=0;
+
+  animationInterval=setInterval(()=>{
+
+    resetLayerStyle();
+
+    let layer = layers[i];
+    let name = layer.feature.properties.name;
+    let value = getValue(layer.feature,type);
+
+    // GLOW
+    layer.setStyle({
+      fillColor:"#ff00cc",
+      fillOpacity:1,
+      color:"#fff",
+      weight:4
+    });
+
+    layer.bindPopup(`<b>${name}</b><br>${value.toLocaleString()}`).openPopup();
+
+    // GRAPH SYNC
+    let {labels} = chartData[type];
+    let chart = charts[type];
+
+    chart.data.datasets[0].pointBackgroundColor =
+      labels.map((l,idx)=> idx===i ? "#ff00cc" : "#fff");
+
+    chart.update();
+
+    i++;
+    if(i>=layers.length) i=0;
+
+  },1500);
+
+}
+
+// STOP
+function stopAnimation(){
+  if(animationInterval){
+    clearInterval(animationInterval);
+    animationInterval=null;
+  }
+}
+
+// ======================
+// FETCH
+// ======================
 fetch("https://germany-webgis-1.onrender.com/states")
 .then(r=>r.json())
 .then(data=>{
@@ -242,26 +296,15 @@ fetch("https://germany-webgis-1.onrender.com/states")
     }
   }).addTo(map);
 
+  buildAnalysisUI(data);
+
   let container=document.getElementById("list");
 
   data.features.forEach(f=>{
-
     let name=f.properties.name;
 
     let div=document.createElement("div");
     div.className="item";
-
-    let eye=document.createElement("span");
-    eye.innerText="👁️";
-    let visible=true;
-
-    eye.onclick=e=>{
-      e.stopPropagation();
-      let layer=layerMap[name];
-      visible?map.removeLayer(layer):map.addLayer(layer);
-      eye.innerText=visible?"🚫":"👁️";
-      visible=!visible;
-    };
 
     let label=document.createElement("span");
     label.innerText=name;
@@ -291,24 +334,13 @@ fetch("https://germany-webgis-1.onrender.com/states")
       });
     };
 
-    div.appendChild(eye);
-    div.appendChild(label);
-    div.appendChild(color);
-    div.appendChild(slider);
-
+    div.append(label,color,slider);
     container.appendChild(div);
   });
 
   map.fitBounds(geoLayer.getBounds());
 
 });
-
-// EVENT
-document.getElementById("analysisType")
-.addEventListener("change",e=>{
-  applyAnalysis(e.target.value);
-});
-
 </script>
 
 </body>
