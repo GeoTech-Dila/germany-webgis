@@ -37,10 +37,10 @@ body { margin:0; display:flex; font-family:Segoe UI; }
 .tab { padding:8px; margin:3px; cursor:pointer; background:#2a2a40; }
 .tab.active { background:#00ffff; color:black; }
 
-/* GRID ITEM */
+/* 🔥 GRID PERFECT ALIGN */
 .item {
   display:grid;
-  grid-template-columns: 1fr 40px 120px;
+  grid-template-columns: 30px 140px 40px 1fr;
   align-items:center;
   gap:10px;
 
@@ -50,11 +50,16 @@ body { margin:0; display:flex; font-family:Segoe UI; }
   border-radius:8px;
 }
 
-/* LEFT */
-.left {
-  display:flex;
-  align-items:center;
-  gap:8px;
+/* EYE */
+.eye {
+  text-align:center;
+  cursor:pointer;
+}
+
+/* LABEL */
+.item span {
+  white-space: normal;
+  word-break: break-word;
 }
 
 /* COLOR */
@@ -64,17 +69,13 @@ input[type="color"] {
   border:2px solid #555;
   border-radius:6px;
   cursor:pointer;
+  justify-self:center;
 }
 
 /* SLIDER */
 input[type="range"] {
   width:100%;
   accent-color:#bb00ff;
-}
-
-/* EYE */
-.eye {
-  cursor:pointer;
 }
 
 /* LEGEND */
@@ -296,14 +297,8 @@ fetch("https://germany-webgis-1.onrender.com/states")
       });
     };
 
-    // LEFT
-    let left=document.createElement("div");
-    left.className="left";
-
-    left.appendChild(eye);
-    left.appendChild(label);
-
-    div.appendChild(left);
+    div.appendChild(eye);
+    div.appendChild(label);
     div.appendChild(color);
     div.appendChild(slider);
 
