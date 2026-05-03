@@ -8,129 +8,86 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
   <style>
-
-    /* ======================
-       GLOBAL FONT FIX
-    ====================== */
     body {
       margin: 0;
       display: flex;
       font-family: "Segoe UI", Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
     }
 
-    /* ======================
-       SIDEBAR
-    ====================== */
     #sidebar {
-  width: 320px;
-  height: 100vh;
-  overflow: auto;
-  background: #1e1e2f;
-  color: white;
-  padding: 15px;
-  border-right: none;
-}
-
-#sidebar h3, #sidebar h4 {
-  margin-top: 15px;
-  font-weight: 600;
-}
-
-    /* ======================
-       PANEL TEXT FIX
-    ====================== */
-    #colorPanel span,
-    #list div {
-      font-family: "Segoe UI", Arial, sans-serif;
-      font-size: 13px;
+      width: 320px;
+      height: 100vh;
+      overflow: auto;
+      background: #1e1e2f;
+      color: white;
+      padding: 15px;
     }
 
-    /* ======================
-       MAP
-    ====================== */
     #map {
-  flex: 1;
-  height: 100vh;
+      flex: 1;
+      height: 100vh;
+      animation: fadeIn 1s ease-in;
+    }
 
-  /* 👇 fade efekti buraya */
-  animation: fadeIn 2s ease-in;
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+    @keyframes fadeIn {
+      from {opacity: 0;}
+      to {opacity: 1;}
+    }
 
-    /* ======================
-       LIST ITEM
-    ====================== */
     .item {
-  padding: 8px;
-  margin: 6px 0;
-  background: #2a2a40;
-  color: white;
-  cursor: pointer;
-  border-radius: 6px;
-}
+      padding: 8px;
+      margin: 6px 0;
+      background: #2a2a40;
+      color: white;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.item:hover {
-  background: #3a3a55;
-}
+    .item:hover {
+      background: #3a3a55;
+    }
 
-    /* ======================
-       COLOR INPUT FIX
-    ====================== */
     input[type="color"] {
       width: 30px;
       height: 25px;
       border: none;
-      background: none;
       cursor: pointer;
     }
-    /* ======================
-   SLIDER STYLE
-====================== */
-input[type="range"] {
-  width: 100%;
-  accent-color: #00ffff;
-}
-    /* ======================
-   LEGEND STYLE
-====================== */
-.legend {
-  background: rgba(30,30,47,0.9);
-  padding: 10px;
-  border-radius: 8px;
-  color: white;
-  font-size: 12px;
-  max-height: 300px;
-  overflow-y: auto;
-}
 
-.legend h4 {
-  margin: 0 0 8px 0;
-  color: #00ffff;
-}
+    input[type="range"] {
+      width: 100%;
+      accent-color: #00ffff;
+    }
 
+    .legend {
+      background: rgba(30,30,47,0.9);
+      padding: 10px;
+      border-radius: 8px;
+      color: white;
+      font-size: 12px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .legend h4 {
+      margin: 0 0 8px 0;
+      color: #00ffff;
+    }
   </style>
 </head>
 
 <body>
 
 <div id="sidebar">
-
-  <h2 style="color:#00ffff; margin-bottom:10px;">🌍 WebGIS Dashboard</h2>
-  <hr style="border: 1px solid #333;">
-
-  <h3>🗺️ Eyalet Renkleri</h3>
-
+  <h2 style="color:#00ffff;">🌍 WebGIS Dashboard</h2>
 
   <h3>📍 Eyalet Listesi</h3>
   <div id="list"></div>
 
   <h4>🎚️ Saydamlık</h4>
   <input id="opacitySlider" type="range" min="0.1" max="1" step="0.1" value="0.7">
-
 </div>
 
 <div id="map"></div>
@@ -142,30 +99,18 @@ input[type="range"] {
 // ======================
 var map = L.map('map').setView([51, 10], 6);
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '',
-}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-// ======================
-// GLOBALS
 // ======================
 let geoLayer;
 let stateColors = {};
 
 // ======================
-// COLOR FUNCTION
-// ======================
 function getColor(name) {
-  const colors = [
-    "#e41a1c","#377eb8","#4daf4a",
-    "#984ea3","#ff7f00","#ffff33",
-    "#a65628","#f781bf"
-  ];
+  const colors = ["#e41a1c","#377eb8","#4daf4a","#984ea3","#ff7f00","#ffff33"];
   return colors[name.charCodeAt(0) % colors.length];
 }
 
-// ======================
-// STYLE FUNCTION
 // ======================
 function styleFeature(feature) {
   return {
@@ -177,71 +122,55 @@ function styleFeature(feature) {
 }
 
 // ======================
-// OPACITY SLIDER
+// OPACITY
 // ======================
-let opacitySlider = document.getElementById("opacitySlider");
+document.getElementById("opacitySlider").addEventListener("input", e => {
+  let val = parseFloat(e.target.value);
 
-opacitySlider.addEventListener("input", function(e) {
-  let value = e.target.value;
-
-  geoLayer.setStyle(function(feature) {
-    return {
-      color: "#222",
-      weight: 1,
-      fillColor: stateColors[feature.properties.name] || getColor(feature.properties.name),
-      fillOpacity: parseFloat(value)
-    };
-  });
+  geoLayer.setStyle(f => ({
+    color: "#222",
+    weight: 1,
+    fillColor: stateColors[f.properties.name] || getColor(f.properties.name),
+    fillOpacity: val
+  }));
 });
 
 // ======================
-// GEOJSON MAP
+// GEOJSON
 // ======================
 fetch("https://germany-webgis-1.onrender.com/states")
   .then(r => r.json())
   .then(data => {
 
-    console.log(data);
-
     geoLayer = L.geoJSON(data, {
+
       style: styleFeature,
 
       onEachFeature: function(feature, layer) {
 
         layer.bindPopup(`
-          <div style="font-size:14px;">
-            <b>${feature.properties.name}</b><br>
-            🌍 Alan: ${
-              feature.properties.area_ha
-              ? feature.properties.area_ha.toLocaleString() + " ha"
-              : "bilgi yok"
-            }
-          </div>
+          <b>${feature.properties.name}</b><br>
+          🌍 ${feature.properties.area_ha
+            ? feature.properties.area_ha.toLocaleString() + " ha"
+            : "bilgi yok"}
         `);
 
         layer.on({
-          mouseover: function(e) {
-            let layer = e.target;
-
-            layer.setStyle({
-              weight: 4,
+          mouseover: e => {
+            e.target.setStyle({
+              weight: 3,
               color: "#00ffff",
               fillOpacity: 1
             });
-
-            layer.bringToFront();
           },
-
-          mouseout: function(e) {
-            geoLayer.resetStyle(e.target);
-          }
+          mouseout: e => geoLayer.resetStyle(e.target)
         });
       }
 
     }).addTo(map);
 
     // ======================
-    // TEK LİSTE + RENK + ZOOM
+    // LİSTE + RENK + ZOOM
     // ======================
     let container = document.getElementById("list");
 
@@ -252,11 +181,7 @@ fetch("https://germany-webgis-1.onrender.com/states")
 
       let div = document.createElement("div");
       div.className = "item";
-      div.style.display = "flex";
-      div.style.justifyContent = "space-between";
-      div.style.alignItems = "center";
 
-      // LABEL
       let label = document.createElement("span");
       label.innerText = name;
       label.style.cursor = "pointer";
@@ -264,28 +189,19 @@ fetch("https://germany-webgis-1.onrender.com/states")
       label.onclick = () => {
         geoLayer.eachLayer(layer => {
           if(layer.feature.properties.name === name) {
-
-            map.fitBounds(layer.getBounds(), {
-              animate: true,
-              duration: 1.5
-            });
-
+            map.fitBounds(layer.getBounds(), {duration:1.5});
             layer.openPopup();
           }
         });
       };
 
-      // COLOR INPUT
       let input = document.createElement("input");
       input.type = "color";
       input.value = stateColors[name];
-      input.style.cursor = "pointer";
 
-      input.onclick = (e) => {
-        e.stopPropagation();
-      };
+      input.onclick = e => e.stopPropagation();
 
-      input.oninput = (e) => {
+      input.oninput = e => {
         stateColors[name] = e.target.value;
         geoLayer.setStyle(styleFeature);
       };
@@ -305,19 +221,10 @@ fetch("https://germany-webgis-1.onrender.com/states")
       div.innerHTML = "<h4>Legend</h4>";
 
       data.features.forEach(f => {
-        let name = f.properties.name;
-        let color = stateColors[name];
-
         div.innerHTML += `
-          <div style="display:flex; align-items:center; margin:4px 0;">
-            <span style="
-              width:15px;
-              height:15px;
-              background:${color};
-              display:inline-block;
-              margin-right:8px;
-            "></span>
-            ${name}
+          <div>
+            <span style="background:${stateColors[f.properties.name]}; width:15px; height:15px; display:inline-block;"></span>
+            ${f.properties.name}
           </div>
         `;
       });
@@ -327,21 +234,8 @@ fetch("https://germany-webgis-1.onrender.com/states")
 
     legend.addTo(map);
 
-    // başlangıç zoom
     map.fitBounds(geoLayer.getBounds());
-
 });
-
-
-};
-
-div.appendChild(label);
-div.appendChild(input);
-
-container.appendChild(div);
-    });
-
-  });
 
 </script>
 
