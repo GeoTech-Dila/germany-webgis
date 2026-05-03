@@ -200,6 +200,8 @@ fetch("https://germany-webgis-1.onrender.com/states")
   .then(r => r.json())
   .then(data => {
 
+console.log(data);
+
     geoLayer = L.geoJSON(data, {
 
       style: styleFeature,
@@ -207,11 +209,15 @@ fetch("https://germany-webgis-1.onrender.com/states")
       onEachFeature: function(feature, layer) {
 
         layer.bindPopup(`
-          <div style="font-size:14px;">
-            <b>${feature.properties.name}</b><br>
-            🌍 Alan: ${feature.properties.area_ha.toLocaleString()} ha
-          </div>
-        `);
+  <div style="font-size:14px;">
+    <b>${feature.properties.name}</b><br>
+    🌍 Alan: ${
+      feature.properties.area_ha
+      ? feature.properties.area_ha.toLocaleString() + " ha"
+      : "bilgi yok"
+    }
+  </div>
+`);
 
         layer.on({
           mouseover: function(e) {

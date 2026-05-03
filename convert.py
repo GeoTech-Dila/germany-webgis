@@ -7,10 +7,7 @@ gdf = gpd.read_file("ALmanya_eyaletler.shp")
 gdf = gdf.to_crs(epsg=3035)
 
 # alan hesapla (m²)
-gdf["area_m2"] = gdf.geometry.area
-
-# hektara çevir
-gdf["area_ha"] = gdf["area_m2"] / 10000
+gdf["area_ha"] = gdf.geometry.area / 10000
 
 # 🔥 tekrar 4326'ya dön (HARİTA İÇİN ŞART)
 gdf = gdf.to_crs(epsg=4326)
