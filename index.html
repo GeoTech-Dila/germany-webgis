@@ -40,27 +40,99 @@ body { margin:0; display:flex; font-family:Segoe UI; }
 .tab { padding:8px; margin:3px; cursor:pointer; background:#2a2a40; }
 .tab.active { background:#00ffff; color:black; }
 
-.item {
-  display: grid;
-  grid-template-columns: 1fr 120px 40px;
-  gap: 10px;
-  padding: 10px;
-  margin: 6px 0;
-  background: #2a2a40;
-  border-radius: 8px;
+/* =========================
+   LAYER ITEMS
+========================= */
+
+.item{
+
+  display:grid;
+
+  grid-template-columns: 120px 1fr 42px;
+
+  align-items:center;
+
+  gap:12px;
+
+  padding:12px;
+
+  margin:8px 0;
+
+  background:#25253a;
+
+  border-radius:14px;
+
+  transition:0.25s ease;
+
+  border:1px solid rgba(255,255,255,0.04);
+
 }
 
-.item span { cursor:pointer; }
-
-input[type="color"] {
-  width:32px; height:32px;
-  border:2px solid #555;
-  border-radius:6px;
+.item:hover{
+  background:#2d2d46;
+  transform:translateY(-1px);
 }
 
-input[type="range"] {
+/* LABEL */
+.item span{
+
+  color:#f1f1f1;
+
+  font-size:14px;
+
+  line-height:1.3;
+
+  font-weight:500;
+
+  word-break:break-word;
+
+  cursor:pointer;
+
+}
+
+/* SLIDER */
+.item input[type="range"]{
+
   width:100%;
-  accent-color:#bb00ff;
+
+  accent-color:#c400ff;
+
+}
+
+/* COLOR PICKER */
+.item input[type="color"]{
+
+  width:38px;
+
+  height:38px;
+
+  padding:3px;
+
+  border-radius:10px;
+
+  border:2px solid #000;
+
+  background:#111;
+
+  cursor:pointer;
+
+  box-shadow:
+    inset 0 0 4px rgba(255,255,255,0.15),
+    0 0 6px rgba(0,0,0,0.5);
+
+}
+
+/* COLOR INSIDE */
+.item input[type="color"]::-webkit-color-swatch{
+
+  border:none;
+
+  border-radius:6px;
+
+}
+
+.item input[type="color"]::-webkit-color-swatch-wrapper{
+  padding:0;
 }
 
 .analysis-card{
@@ -147,6 +219,190 @@ input[type="range"] {
 .analysis-section.active .analysis-content{
   display:block;
 }
+
+  /* =========================
+   SIDE PANELS
+========================= */
+
+.sidePanel{
+  position:fixed;
+  top:70px;
+  width:320px;
+  height:calc(100vh - 80px);
+
+  background:rgba(20,20,35,0.96);
+  backdrop-filter:blur(10px);
+
+  z-index:2000;
+
+  border-radius:16px;
+
+  overflow:hidden;
+
+  transition:all 0.35s ease;
+
+  box-shadow:0 0 20px rgba(0,0,0,0.5);
+}
+
+/* LEFT */
+.sidePanel.left{
+  left:10px;
+}
+
+/* RIGHT */
+.sidePanel.right{
+  right:10px;
+}
+
+/* CLOSED STATES */
+.sidePanel.left.closed{
+  transform:translateX(-285px);
+}
+
+.sidePanel.right.closed{
+  transform:translateX(285px);
+}
+
+/* HEADER */
+.panelHeader{
+
+  background:linear-gradient(90deg,#ff00cc,#7a00ff);
+
+  padding:16px;
+
+  font-weight:700;
+
+  cursor:pointer;
+
+  border-bottom:1px solid rgba(255,255,255,0.08);
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  letter-spacing:0.5px;
+
+  color:white;
+
+  box-shadow:
+    0 0 12px rgba(255,0,204,0.35);
+
+}
+
+/* CONTENT */
+.panelContent{
+  padding:12px;
+  overflow:auto;
+  height:calc(100% - 60px);
+}
+
+/* MAP */
+#map{
+  width:100%;
+  height:100vh;
+}
+
+  /* =========================
+   GROUPS
+========================= */
+
+.layerGroup{
+
+  margin-bottom:14px;
+
+  background:#1d1d30;
+
+  border-radius:14px;
+
+  overflow:hidden;
+
+  border:1px solid rgba(255,255,255,0.04);
+
+}
+
+/* HEADER */
+.groupHeader{
+
+  padding:14px;
+
+  cursor:pointer;
+
+  font-weight:600;
+
+  background:linear-gradient(90deg,#ff00cc,#8b00ff);
+
+  transition:0.25s ease;
+
+  user-select:none;
+
+  color:white;
+
+  box-shadow:
+    0 0 10px rgba(255,0,204,0.25);
+
+}
+
+.groupHeader:hover{
+
+  filter:brightness(1.15);
+
+}
+
+/* CONTENT */
+.groupContent{
+
+  padding:10px;
+
+  display:block;
+
+}
+
+/* COLLAPSED */
+.layerGroup.closed .groupContent{
+  display:none;
+}
+
+/* MINI ITEM */
+.miniItem{
+
+  padding:10px;
+
+  border-radius:10px;
+
+  background:#2a2a40;
+
+  color:#eee;
+
+  font-size:14px;
+
+}
+
+  .airportItem{
+
+  cursor:pointer;
+
+  transition:0.25s ease;
+
+}
+
+.airportItem:hover{
+
+  background:#ff00cc;
+
+  color:white;
+
+  transform:translateX(4px);
+
+}
+
+  .leaflet-marker-icon{
+
+  filter:
+    drop-shadow(0 0 6px #ff00cc)
+    drop-shadow(0 0 12px #ff00cc);
+
+}
+
 </style>
 </head>
 
@@ -159,12 +415,65 @@ input[type="range"] {
   <div>WebGIS Dashboard</div>
 </div>
 
-<div id="sidebar">
-<button onclick="switchTab('layers')" class="tab active">Layers</button>
-<button onclick="switchTab('analysis')" class="tab">Analysis</button>
+<!-- LEFT PANEL -->
+<div id="leftPanel" class="sidePanel left open">
 
-<div id="layersTab"><div id="list"></div></div>
-<div id="analysisTab" style="display:none;"></div>
+  <div class="panelHeader" onclick="togglePanel('leftPanel')">
+    🗂 Harita Verileri
+  </div>
+
+  <div class="panelContent">
+
+  <!-- EYALET -->
+  <div class="layerGroup">
+
+    <div class="groupHeader"
+         onclick="toggleGroup(this)">
+      🟢 Eyalet Verileri
+    </div>
+
+    <div class="groupContent">
+      <div id="list"></div>
+    </div>
+
+  </div>
+
+  <!-- AIRPORT -->
+  <div class="layerGroup">
+
+    <div class="groupHeader"
+         onclick="toggleGroup(this)">
+      ✈️ Havalimanı Verileri
+    </div>
+
+    <div class="groupContent">
+
+      <div class="miniItem airportItem"
+     onclick="toggleAirportLayer()">
+
+  ✈️ Almanya Airports
+
+</div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="rightPanel" class="sidePanel right open">
+
+  <div class="panelHeader" onclick="togglePanel('rightPanel')">
+    📊 Analiz Katmanları
+  </div>
+
+  <div class="panelContent">
+    <div id="analysisTab"></div>
+  </div>
+
 </div>
 
 
@@ -181,21 +490,6 @@ input[type="range"] {
 
 </div>
 
-<div id="demoPanel">
-
-  <div id="demoHeader" onclick="toggleDemoPanel()">
-    📊 Nüfus ve Demografik Veriler
-  </div>
-
-  <div id="demoContent">
-
-    <div class="demoItem" onclick="startAnimation('area')">Alan Analizi</div>
-    <div class="demoItem" onclick="startPopulation()">Nüfus Analizi</div>
-    <div class="demoItem" onclick="startDensity()">Yoğunluk Analizi</div>
-
-  </div>
-
-</div>
 
 <script>
 
@@ -210,6 +504,37 @@ function randomColor(){
   return `hsl(${Math.random()*360},70%,60%)`;
 }
 
+/* PANEL TOGGLE */
+function togglePanel(id){
+
+  let panel = document.getElementById(id);
+
+  panel.classList.toggle("closed");
+
+}
+
+function toggleGroup(header){
+
+  let group = header.parentElement;
+
+  group.classList.toggle("closed");
+
+}
+
+function toggleAirportLayer(){
+
+  if(map.hasLayer(airportLayer)){
+
+    map.removeLayer(airportLayer);
+
+  } else {
+
+    airportLayer.addTo(map);
+
+  }
+
+}
+
 function resetLayerStyle(){
   geoLayer.eachLayer(l=>{
     let n=l.feature.properties.name;
@@ -221,15 +546,17 @@ function resetLayerStyle(){
   });
 }
 
-function switchTab(tab){
-  document.getElementById("layersTab").style.display="none";
-  document.getElementById("analysisTab").style.display="none";
-  document.getElementById(tab+"Tab").style.display="block";
+function togglePanel(id){
 
-  if(tab==="layers"){
+  let panel = document.getElementById(id);
+
+  panel.classList.toggle("closed");
+
+  if(id==="leftPanel"){
     stopAnimation();
     resetLayerStyle();
   }
+
 }
 
 // ======================
@@ -286,38 +613,6 @@ hint.style.fontWeight = "600";
   `;
   container.appendChild(info);
 
-
-// ======================
-// ✈️ AIRPORT ANALİZİ
-// ======================
-
-let airportDiv = document.createElement("div");
-airportDiv.className="analysis-card";
-
-let airportTitle = document.createElement("div");
-airportTitle.innerText="✈️ Airport Alan Analizi";
-airportTitle.style.fontWeight="bold";
-airportTitle.style.background="#1e1e2f";
-airportTitle.style.padding="6px 10px";
-airportTitle.style.borderRadius="6px";
-airportTitle.style.cursor="pointer";
-
-let airportDesc = document.createElement("div");
-airportDesc.className="desc";
-airportDesc.innerText="Havalimanı alanlarını haritada görmek için tıkla";
-
-airportTitle.onclick = ()=>{
-
-  if(map.hasLayer(airportLayer)){
-    map.removeLayer(airportLayer);
-  } else {
-    airportLayer.addTo(map);
-  }
-
-};
-
-airportDiv.append(airportTitle, airportDesc);
-container.appendChild(airportDiv);
 
 }
 
@@ -474,14 +769,29 @@ fetch("https://germany-webgis-1.onrender.com/states")
   fetch("data_airport2/Almanya_airports.geojson")
   .then(r=>r.json())
   .then(airportData=>{
-    airportLayer = L.geoJSON(airportData,{
-      style:{
-        color:"#00ffff",
-        weight:1,
-        fillColor:"#00ffff",
-        fillOpacity:0.3
-      }
+    let airportIcon = L.icon({
+
+  iconUrl:'icons/plane.png',
+
+  iconSize:[28,28],
+
+  iconAnchor:[14,14],
+
+  popupAnchor:[0,-12]
+
+});
+
+airportLayer = L.geoJSON(airportData,{
+
+  pointToLayer:function(feature,latlng){
+
+    return L.marker(latlng,{
+      icon:airportIcon
     });
+
+  }
+
+});
   });
 
   // 🔥 BURAYA AL
