@@ -395,6 +395,24 @@ body { margin:0; display:flex; font-family:Segoe UI; }
 
 }
 
+.riverItem{
+
+  cursor:pointer;
+
+  transition:0.25s ease;
+
+}
+
+.riverItem:hover{
+
+  background:#ff00cc;
+
+  color:white;
+
+  transform:translateX(4px);
+
+}
+
   .leaflet-marker-icon{
 
   filter:
@@ -459,9 +477,37 @@ body { margin:0; display:flex; font-family:Segoe UI; }
 
   </div>
 
-</div>
+<!-- RIVERS -->
+<div class="layerGroup">
+
+  <div class="groupHeader"
+       onclick="toggleGroup(this)">
+    🌊 Nehir Verileri
+  </div>
+
+  <div class="groupContent">
+
+    <div class="miniItem riverItem"
+     onclick="toggleRiverLayer()">
+
+  Yan Kolları
 
 </div>
+
+<div class="miniItem riverItem"
+     onclick="toggleTributaryLayer()">
+
+  Nehirler
+
+</div>
+
+  </div>
+
+</div>
+
+</div> <!-- panelContent -->
+</div> <!-- leftPanel -->
+
 
 <!-- RIGHT PANEL -->
 <div id="rightPanel" class="sidePanel right open">
@@ -500,6 +546,9 @@ let geoLayer, layerMap={}, stateColors={}, opacityMap={};
 let charts={}, chartData={}, animationInterval=null;
 let airportLayer;
 
+let riverLayer;
+let tributaryLayer;
+
 function randomColor(){
   return `hsl(${Math.random()*360},70%,60%)`;
 }
@@ -530,6 +579,36 @@ function toggleAirportLayer(){
   } else {
 
     airportLayer.addTo(map);
+
+  }
+
+}
+
+// 🌊 ANA NEHIR
+function toggleRiverLayer(){
+
+  if(map.hasLayer(riverLayer)){
+
+    map.removeLayer(riverLayer);
+
+  } else {
+
+    riverLayer.addTo(map);
+
+  }
+
+}
+
+// 🌀 YAN KOLLAR
+function toggleTributaryLayer(){
+
+  if(map.hasLayer(tributaryLayer)){
+
+    map.removeLayer(tributaryLayer);
+
+  } else {
+
+    tributaryLayer.addTo(map);
 
   }
 
@@ -793,6 +872,41 @@ airportLayer = L.geoJSON(airportData,{
 
 });
   });
+
+  // 🌊 ANA NEHIRLER
+fetch("/data_rivers/ALmanya_nehirler.geojson")
+.then(r=>r.json())
+.then(riverData=>{
+
+  riverLayer = L.geoJSON(riverData,{
+
+    style:{
+      color:"#00d0ff",
+      weight:1.5,
+      opacity:0.9
+    }
+
+  });
+
+});
+
+
+// 🌀 YAN KOLLAR
+fetch("/data_rivers/ALmanya_nehirlerson.geojson")
+.then(r=>r.json())
+.then(tributaryData=>{
+
+  tributaryLayer = L.geoJSON(tributaryData,{
+
+    style:{
+      color:"#5ce1ff",
+      weight:3,
+      opacity:0.7
+    }
+
+  });
+
+});
 
   // 🔥 BURAYA AL
   buildAnalysisUI(data);
